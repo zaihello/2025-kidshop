@@ -142,7 +142,7 @@
           <div class="flex items-center mt-6 space-x-4">
             <div class="flex items-center space-x-1 text-gray-600 hover:text-blue-500">
               <img 
-                :src="isInWishlist ? '/check.svg' : '/wishlist.svg'" 
+                :src="isInWishlist ? './check.svg' : './wishlist.svg'" 
                 @click="toggleWishlist"  
                 class="cursor-pointer w-6 h-6"
                 alt="Wishlist Icon"

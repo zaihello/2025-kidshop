@@ -228,7 +228,7 @@ export default{
                           alt=""> -->
                           <!-- ?. 避免當 product.variants 為空陣列時報錯。 -->
                         <img 
-                          :src="isInCart(product.variants[0]?.id)? '/check.svg' : '/cart.svg'"  
+                          :src="isInCart(product.variants[0]?.id)? './check.svg' : './cart.svg'"  
                           @click="toggleCart(product)" 
                           alt="">
                         <a  class="group/edit invisible group-hover/cart:visible duration-75" >
@@ -253,7 +253,7 @@ export default{
                      <!-- @click="toggleWishlistHandler(product)" -->
                     <div class="group/wishlist relative">
                         <img 
-                            :src="isInWishlist ? '/check.svg' : '/wishlist.svg'"
+                            :src="isInWishlist ? './check.svg' : './wishlist.svg'"
                             @click="handleClick"
                             alt="Wishlist Icon">
                         <a  class="group/edit invisible group-hover/wishlist:visible duration-75" href="#">

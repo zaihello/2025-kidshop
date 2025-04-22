@@ -5,7 +5,10 @@ import './style.css'
 import App from './App.vue'
 
 // 不要用createMemoryHistory頁面會出不來
-import { createWebHistory, createRouter } from 'vue-router'
+// import { createRouter, createWebHistory } from 'vue-router'
+
+import { createRouter, createWebHashHistory } from 'vue-router'
+
 
 import FrontLayout from './views/FrontLayout.vue'
 import Home from './views/front/Home.vue'
@@ -36,6 +39,13 @@ import Members from './views/admin/UserManagement/Members.vue'
 import CartList from './views/front/CartList.vue'
 import PayList from './views/front/PayList.vue'
 import OrderDone from './views/front/OrderDone.vue'
+import AccountOrderDetails from './views/front/AccountOrderDetails.vue'
+import LinePayPage from './views/front/LinePayPage.vue'
+import LinePay from './views/front/LinePay.vue'
+import CreditPayPage from './views/front/CreditPayPage.vue'
+import CreditPay from './views/front/CreditPay.vue'
+// import AdminOrderDetail from './views/admin/OrdersManagement/AdminOrderDetail.vue'
+
 import test from './views/front/test.vue'
 import test2 from './views/front/test2.vue'
 import test3 from './views/front/test3.vue'
@@ -111,7 +121,8 @@ const routes = [
                 name:'ProductDetails',
                 component:ProductDetails
             },
-            //帳號管理頁面
+
+            //使用者帳號管理頁面
             {
                 path:'account',
                 name:'AccountHome',
@@ -128,12 +139,18 @@ const routes = [
                         name:'AccountCoupons',
                         component:AccountCoupons
                     },
-
                     {
                         path:'orders',
                         name:'AccountOrders',
                         component:AccountOrders
-                    }
+                    },
+                    //
+                    {
+                        path:'orders/:id',
+                        name:'AccountOrderDetails',
+                        component:AccountOrderDetails
+                    },
+
                 ]
         
             },
@@ -152,6 +169,31 @@ const routes = [
                         name:'PayList',
                         component:PayList
                     },
+                    //linepay付款頁面
+                    {
+                        path:'paylist/line/:id',
+                        name:'LinePayPage',
+                        component:LinePayPage
+                    },
+                     //linepay付款成功頁面
+                    {
+                        path:'paylist/linepay/:id',
+                        name:'LinePay',
+                        component:LinePay
+                    },
+                    //credit付款頁面
+                    {
+                        path:'paylist/credit/:id',
+                        name:'CreditPayPage',
+                        component:CreditPayPage
+                    },
+                    //credit付款成功頁面
+                    {
+                        path:'paylist/creditpay/:id',
+                        name:'CreditPay',
+                        component:CreditPay
+                    },
+
                     {
                         path:'orderdone',
                         name:'OrderDone',
@@ -202,7 +244,13 @@ const routes = [
                                 path:'',
                                 name: 'OrderList',
                                 component:OrderList,
-                            }
+                            },
+                            // {
+                            //     path:'/:id',
+                            //     name: 'AdminOrderDetail',
+                            //     component:AdminOrderDetail,
+                            // },
+
                         ]
                     },
                     // 用戶管理
@@ -297,10 +345,16 @@ const routes = [
 const app = createApp(App)
 const pinia = createPinia();
 
+// const router = createRouter({
+//     history:createWebHistory(),
+//     routes
+// })
+
 const router = createRouter({
-    history:createWebHistory(),
-    routes
-})
+    history: createWebHashHistory(), // ← 改成 hash 模式
+    routes,
+  })
+  
 
 // 註冊 Pinia 和 Router
 app.use(router)

@@ -736,6 +736,23 @@ existingCartData.final_total = this.finalTotal;
                 console.error('❌ 刪除全部商品失敗:', error);
             }
         },
+        //刪除在/cartsdata結帳的商品
+        async clearSelectedItems() {
+            const authStore = useAuthStore();
+            const token = authStore.token;
+          
+            // ✅ 篩掉已結帳的商品
+            this.cartItems.items = this.cartItems.items.filter(item => !item.selected);
+          
+            // ✅ PATCH 更新到 API
+            await axios.patch(`https://204ed3432b06d7af.mokky.dev/cartsdata/${this.cartItems.id}`, this.cartItems, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          
+            // ✅ 更新 localStorage（可選）
+            localStorage.setItem("cartItems", JSON.stringify(this.cartItems));
+        },
+          
  
     },
 })

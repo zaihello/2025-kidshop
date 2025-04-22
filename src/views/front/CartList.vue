@@ -269,8 +269,14 @@ export default {
   
             <div class="space-y-4">
               <label v-for="method in paymentStore.paymentMethods" :key="method.value"class="flex items-center space-x-3 cursor-pointer">
-                <input type="radio" name="payment" class="w-4 h-4 text-blue-500 border-gray-300 focus:ring-blue-400"
-                :value="method.value" v-model="paymentStore.selectedPayment">
+                <!--@change 當選擇付款方式時，將值設為 selectedMethod -->
+                <input 
+                  type="radio" 
+                  name="payment" 
+                  class="w-4 h-4 text-blue-500 border-gray-300 focus:ring-blue-400"
+                  :value="method.value" 
+                  v-model="paymentStore.selectedPayment"
+                >
                 <div class="flex flex-col flex-grow">
                   <span class="font-medium">{{ method.name }}</span>
                   <span class="text-gray-500 text-sm">{{ method.description }}</span>

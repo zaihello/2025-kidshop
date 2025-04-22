@@ -15,11 +15,11 @@ export default{
     data(){
         return{
             images:[
-                "/contact-us-1.jpg.webp",
-                "/contact-us-2.jpg.webp",
-                "/contact-us-3.jpg.webp",
-                "/contact-us-4.jpg.webp",
-                "/contact-us-5.jpg.webp",
+                "./contact-us-1.jpg.webp",
+                "./contact-us-2.jpg.webp",
+                "./contact-us-3.jpg.webp",
+                "./contact-us-4.jpg.webp",
+                "./contact-us-5.jpg.webp",
 
             ],
             modules:[Navigation,Autoplay],

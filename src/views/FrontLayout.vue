@@ -296,7 +296,7 @@ export default{
   
   </div>
 
-  <!-- 加入 margin-top 來避免被 Header 使用fixed遮擋 -->
+  <!-- 加入 margin-top 來避免被 Header 使用fixed遮擋  class="mt-28 lg:mt-44"-->
   <div class="mt-28 lg:mt-44">
     <router-view/>
   </div>

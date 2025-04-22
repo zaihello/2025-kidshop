@@ -5,9 +5,10 @@ import { usePaymentStore } from '../../stores/paymentStore'
 import axios from 'axios'
 import Swal from 'sweetalert2'
 import CartNavbar from '../../components/front/CartNavbar.vue'
+import test4 from '../front/test4.vue'
 export default {
   name: 'CartList',
-  components:{CartNavbar},
+  components:{CartNavbar,test4},
   data(){
     return{
       loading:true, // Start with loading state
@@ -255,6 +256,7 @@ export default {
       <!-- 購物車是空的 + 商品列表 -->
       <div v-else>
         <CartNavbar/>
+        <!-- <test4/> -->
         <!-- 購物車是空的 -->
         <div v-if="cartStore.itemTypesCount === 0"  class="flex flex-col items-center gap-4 max-w-96 m-auto">
           <img src="/emptypackage.png" alt="" class="max-w-52 max-h-52">

@@ -1,23 +1,65 @@
-<script></script>
+<script>
+export default{
+    data(){
+        return{
+            steps: [
+                { id: 1, label: '購物清單', path: '/cart/cartlist' },
+                { id: 2, label: '填寫資料', path: '/cart/paylist' },
+                { id: 3, label: '訂購完成', path: '/cart/orderdone' },
+            ],
+            isSubmitted: false//訂購完成後不能點前兩步用這追蹤
+        }
+    },
+    computed:{
+        //
+        currentStep() {
+            const current = this.steps.find(step => this.$route.path.includes(step.path))
+            return current ? current.id : 1
+        },
+    },
+    methods:{
+        goToStep(step) {
+            if (this.isSubmitted && step.id !== 3) return
+            this.$router.push(step.path)
+        }
+    },
+    watch: {
+    $route(to) {
+      this.isSubmitted = to.path === '/cart/orderdone'
+    }
+  },
+  mounted() {
+    this.isSubmitted = this.$route.path === '/cart/orderdone'
+  }
+}
+</script>
 <template>
-    <ol class="flex gap-4 items-center md:justify-center">
-        <li class="flex gap-2 items-center">
-            <p class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">1</p>
-            <p>購物清單</p>   
+<div class="w-full 2xl:w-3/4 2xl:mx-auto mb-8">
+    <!-- 多欄完整步驟：只在 md 顯示 -->   
+    <ol class="hidden md:flex gap-4 items-center justify-center">
+        <li v-for="step in steps" :key="step.id" class="flex gap-2 items-center">
+            <button
+                class="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+                :class="{
+                    'bg-orange-500 text-white': currentStep === step.id,
+                    'bg-orange-100 text-black': currentStep !== step.id,
+                    'pointer-events-none opacity-50': isSubmitted && step.id !== 3
+                }"
+                @click="goToStep(step)"
+            >
+            {{ step.id }}
+            </button>
+            <span>{{ step.label }}</span>
+            <span v-if="step.id !== steps.length">→</span>
         </li>
-        <span> →</span>
-        <li class="flex gap-2 items-center">
-            <p class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">2</p>
-            <p>填寫資料</p>  
-        </li>
-        <span> →</span>
-        <li class="flex gap-2 items-center">
-            <p class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">3</p>
-            <p>訂購完成</p>
-        </li>
+        
     </ol>
-    <!-- Breadcrumb -->
-    <div class="mb-6 text-sm text-gray-600 text-center">
-          <span class="font-semibold">SHOPPING CART</span> CHECKOUT → ORDER COMPLETE
-        </div>
+    <!-- 單一欄顯示當前步驟：只在 <md 顯示 -->
+    <div class="block md:hidden text-center">
+      <p class="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 rounded-full text-sm">
+        <span class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold">{{ currentStep }}</span>
+        {{ steps[currentStep - 1].label }}
+      </p>
+    </div>
+</div>    
 </template>

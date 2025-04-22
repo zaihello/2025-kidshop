@@ -49,6 +49,7 @@ import CreditPay from './views/front/CreditPay.vue'
 import test from './views/front/test.vue'
 import test2 from './views/front/test2.vue'
 import test3 from './views/front/test3.vue'
+import test4 from './views/front/test4.vue'
 
 
 
@@ -60,6 +61,11 @@ const routes = [
         name:'FrontLayout',
         component:FrontLayout,
         children:[
+            {
+                path:'test4',
+                name:'test4',
+                component:test4
+            },    
             {
                 path:'test3',
                 name:'test3',
@@ -159,11 +165,13 @@ const routes = [
                 path:'cart',
                 redirect:'/cart/cartlist',
                 children:[
+                    //購物清單頁面
                     {
                         path:'cartlist',                        
                         name:'CartList',
                         component:CartList
                     },
+                    //填寫資料頁面
                     {
                         path:'paylist',
                         name:'PayList',
@@ -193,7 +201,7 @@ const routes = [
                         name:'CreditPay',
                         component:CreditPay
                     },
-
+                    //訂購完成頁面
                     {
                         path:'orderdone',
                         name:'OrderDone',

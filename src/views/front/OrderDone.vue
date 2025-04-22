@@ -4,10 +4,11 @@ import { useCartStore } from '../../stores/cartStore'
 import { usePaymentStore } from '../../stores/paymentStore'
 import { useAuthStore } from '../../stores/authStore'
 import axios from 'axios'
+import test4 from '../front/test4.vue'
 
 
 export default{
-    components:{ CartNavbar },
+    components:{ CartNavbar,test4 },
     data(){
       return{
         orderData: null,//若資料來自 API，初始化設 null 最安全、語意最明確。代表「尚未載入資料」，適合用來區分「尚未請求」和「已請求但為空資料」的情況
@@ -50,10 +51,12 @@ export default{
 }
 </script>
 <template>
+  <div class="bg-stone-200">
     <CartNavbar/>
-    <div>
+    <!-- <test4/> -->
+    <div class="w-full 2xl:w-3/4 2xl:m-auto p-8">
         <!-- 商品資訊(有勾選的商品) -->
-        <div v-if="orderData" class="bg-gray-100 p-6 rounded-lg shadow-md w-full">
+        <div v-if="orderData" class="bg-gray-100 p-8 rounded-lg shadow-md w-full">
           <!-- 表頭 (僅 md 以上顯示) -->
           <div class="hidden md:flex font-medium text-gray-700 border-b pb-2 mb-4">
             <div class="flex-[1]">商品編號</div>
@@ -163,7 +166,8 @@ export default{
 
         </div>
         <!-- 訂單成立 -->
-        <div v-if="orderData" class="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-2xl space-y-8">
+         <!-- class="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-2xl space-y-8" -->
+        <div v-if="orderData" class="bg-white shadow-lg rounded-2xl mt-20 p-8">
             <div class="text-center space-y-2">
                 <p class="text-2xl font-bold text-green-600">謝謝您！您的訂單已經成立！</p>
                 <p class="text-lg text-gray-700">訂單號碼：<span class="font-semibold text-black">{{ orderData.id }}</span></p>
@@ -215,8 +219,12 @@ export default{
             </div>
        
         </div>
-        <div>
-            <button >繼續購物</button>
+        <div class="flex justify-center w-full py-10">
+          <!-- type="button" -->
+            <button @click="$router.push('/shop')" class="px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition">繼續購物</button>
+            <!-- type="button" -->
+            <button @click="$router.push('/account/orders')" class="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">查看訂單</button>
         </div>
     </div> 
+  </div>  
 </template>

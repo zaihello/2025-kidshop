@@ -3,6 +3,7 @@
 import CartNavbar from '../../components/front/CartNavbar.vue'
 import { useCartStore } from '../../stores/cartStore'
 import { usePaymentStore } from '../../stores/paymentStore'
+import test4 from '../front/test4.vue'
 
 //引入 VeeValidate 所需模組
 import { defineRule, configure, Field, Form, ErrorMessage } from 'vee-validate';  
@@ -57,7 +58,7 @@ defineRule('twMobile', value => {
 
 export default {
   // name: "CheckoutPage",
-  components:{CartNavbar,Field,Form,ErrorMessage},
+  components:{CartNavbar,Field,Form,ErrorMessage,test4},
   data(){
     return{
       storeName: '',
@@ -166,11 +167,13 @@ export default {
 </script>
 
 <template>
-    <Form @submit="submitOrder">
+  <div class="bg-stone-200">
+    <Form @submit="submitOrder" class="w-full 2xl:w-3/4 2xl:m-auto p-8">
       <!-- 1.2.3. -->
       <div>
         <CartNavbar/>
       </div>
+      <!-- <test4/> -->
       <!-- 商品 + 填資料 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- 訂單資訊(有勾選的商品) -->
@@ -600,18 +603,20 @@ export default {
         </div>
       </div>
       <!-- 購物、支付按鈕 -->
-      <div class="flex justify-center w-full gap-4 my-8">
+      <div class="flex justify-between w-full gap-4 my-10">
+        <!-- type="button" -->
         <button 
-          type="button"
-          class="px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition"
+          @click="$router.push('/cart/cartlist')"
+          class="px-20 py-3 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition"
         >繼續購物
         </button>
         <!-- type="button" 是按下觸發-->
         <button 
           type="submit"
-          class="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+          class="px-20 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
           >支付${{ cartStore.finalTotal.toLocaleString() }}</button>
       </div>
     </Form>
+  </div>  
 </template>
   

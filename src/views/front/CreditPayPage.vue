@@ -11,10 +11,7 @@ defineRule('numeric', numeric)
 defineRule('min', min)
 defineRule('max', max)
 defineRule('regex', regex)
-defineRule('matchesCaptcha', (value, _, ctx) => {
-  if (value === ctx.form.generatedCaptcha) return true
-  return '驗證碼錯誤'
-})
+
 
 defineRule('expiryDate', (value) => {
   if (!value) return '請輸入有效期限';
@@ -52,13 +49,11 @@ export default {
   data() {
     return {  
       orderData: null,//若資料來自 API，初始化設 null 最安全、語意最明確。代表「尚未載入資料」，適合用來區分「尚未請求」和「已請求但為空資料」的情況  
-      orderId:'',
+      orderId:'',//訂單編號
       //   orderId: this.$route.params.orderId,
-      cardNumber: "",//卡號
 
-      errors: {},//驗證錯誤提示
       //421
-      cardSegments: ['', '', '', ''],
+      cardSegments: ['', '', '', ''],//卡號
       expiryDate: '',//有效期限
       cvc: '',//背面末3碼
       captcha: '',//輸入驗證碼
@@ -91,32 +86,20 @@ export default {
       this.generatedCaptcha = Array.from({ length: 5 }, () =>
         chars.charAt(Math.floor(Math.random() * chars.length))
       ).join("");
+
+      //驗證 generatedCaptcha 是否一致
+      defineRule('matchesCaptcha', (value) => {
+        const userInput = value?.trim().toUpperCase();// 忽略大小寫比對
+        const correctCaptcha = this.generatedCaptcha?.toUpperCase();
+        return userInput === correctCaptcha ? true : '驗證碼錯誤';
+      });
+
     },
-    // 信用卡的驗證
-    // validateForm() {
-    //   this.errors = {};
-
-    //   if (!/^\d{16}$/.test(this.cardNumber)) {
-    //     this.errors.cardNumber = "卡號需為 16 位數字";
-    //   }
-    //   if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(this.expiryDate)) {
-    //     this.errors.expiryDate = "有效期限格式為 MM/YY";
-    //   }
-    //   if (!/^\d{3}$/.test(this.cvc)) {
-    //     this.errors.cvc = "背面末3碼需為 3 位數字";
-    //   }
-    //   if (this.captcha.toUpperCase() !== this.generatedCaptcha) {
-    //     this.errors.captcha = "圖形驗證碼不正確";
-    //   }
-
-    //   return Object.keys(this.errors).length === 0;
-    // },
+   
     // 模擬付款完成按鈕
     async completePayment() {
-      if (this.validateForm()) {//驗證表單是否正確
         await this.markOrderAsPaid(); // ⬅️ 先更新付款資訊
-        this.$router.push("/cart/orderdone"); // ⬅️ 再導頁
-      }
+        this.$router.push("/cart/orderdone"); // ⬅️ 再導頁 
     },
     //結帳後有transaction_id、paid_at、status資料產生
     async markOrderAsPaid() {
@@ -154,15 +137,6 @@ export default {
       }
     },
 
-    //重新填寫按鈕
-    // resetForm() {
-    //   this.cardNumber = "";
-    //   this.expiryDate = "";
-    //   this.cvc = "";
-    //   this.captcha = "";
-    //   this.generateCaptcha();
-    //   this.errors = {};
-    // },
     //重新填寫按鈕 421
     resetForm() {
       this.cardSegments = ['', '', '', '']
@@ -170,7 +144,6 @@ export default {
       this.cvc = "";
       this.captcha = "";
       this.generateCaptcha();
-      this.errors = {};
     },
     //格式化日期 2025-04-14 19:05:09
     formatDateTime(dateStr) {
@@ -187,14 +160,15 @@ export default {
 };
 </script>
 
-<template>
-  <div v-if="orderData" class="max-w-xl mx-auto bg-white shadow-lg rounded-xl p-8 mt-10">
+<template >
+<div class="bg-stone-200 py-20 p-8">  
+  <div v-if="orderData" class="max-w-xl mx-auto bg-white shadow-lg rounded-xl p-8 my-10">
     <h2 class="text-2xl font-semibold mb-4 text-center">信用卡付款</h2>
     <p class="mb-2">訂單編號： {{ orderId }}</p>
     <p class="mb-2">交易金額: ${{ orderData.final_price }}</p>
     <p class="mb-6">交易日期:{{ orderData.created_at }}</p>
-
-    <Form @submit="completePayment" v-slot="{ errors }">
+    <!-- v-slot="{ errors }" -->
+    <Form @submit="completePayment" >
       <!-- 卡號 -->
       <div>
         <label class="block font-medium mb-1">卡號</label>
@@ -219,7 +193,7 @@ export default {
           <ErrorMessage :name="'card3'" />
         </div>
       </div>  
-      <!-- 421 有效期限-->
+      <!-- 有效期限-->
       <div>
         <label class="block font-medium mt-4 mb-1">有效期限</label>
         <Field
@@ -231,49 +205,49 @@ export default {
         />
         <ErrorMessage name="expiryDate" class="text-red-500 text-sm" />
       </div> 
-    <!-- 有效期限 -->
-    <input
-      v-model="expiryDate"
-      type="text"
-      placeholder="有效期限 MM/YY"
-      class="block border p-2 w-full my-2"
-    />
-    <p v-if="errors.expiryDate" class="text-red-500 text-sm">{{ errors.expiryDate }}</p>
-
-    <!-- 背面末3碼 -->
-    <input
-      v-model="cvc"
-      type="text"
-      placeholder="背面末3碼"
-      class="block border p-2 w-full my-2"
-    />
-    <p v-if="errors.cvc" class="text-red-500 text-sm">{{ errors.cvc }}</p>
-
-    <!-- 圖形驗證碼 -->
-    <div class="my-2">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="bg-gray-200 text-lg font-bold px-3 py-1 rounded tracking-widest">
-          {{ generatedCaptcha }}
-        </span>
-        <button @click="generateCaptcha" class="text-blue-600 text-sm">重新產生</button>
+      <!-- CVC -->
+      <div>
+        <label class="block font-medium mt-4 mb-1">背面末3碼</label>
+        <Field
+          name="cvc"
+          v-model="cvc"
+          rules="required|numeric|min:3"
+          placeholder="CVC"
+          maxlength="3"
+          class="border p-2 w-full"
+        />
+        <ErrorMessage name="cvc" class="text-red-500 text-sm" />
       </div>
-      <input
-        v-model="captcha"
-        type="text"
-        placeholder="請輸入上方驗證碼"
-        class="block border p-2 w-full"
-      />
-      <p v-if="errors.captcha" class="text-red-500 text-sm">{{ errors.captcha }}</p>
-    </div>
+      <!-- 422 -->
+      <div>
+        <!-- 圖形驗證碼 -->
+        <label class="block font-medium mt-4 mb-1">圖形驗證碼</label>
+        <div class="flex items-center gap-3 mb-2">
+          <span class="bg-gray-200 text-lg px-4 py-2 font-bold rounded tracking-widest">
+            {{ generatedCaptcha }}
+          </span>
+          <button type="button" @click="generateCaptcha" class="text-blue-600 text-sm">重新產生</button>
+        </div>
+        <Field
+          name="captcha"
+          v-model="captcha"
+          rules="required|matchesCaptcha"
+          placeholder="請輸入上方驗證碼"
+          class="border p-2 w-full"
+        />
+        <ErrorMessage name="captcha" class="text-red-500 text-sm"/>
+      </div>
+      <!-- 按鈕 -->
+      <div class="flex gap-4 mt-6">
+        <button @click="resetForm" class="bg-gray-400 text-white px-4 py-2 rounded">重新填寫</button>
 
-    <div class="flex gap-4 mt-6">
-      <button @click="resetForm" class="bg-gray-400 text-white px-4 py-2 rounded">重新填寫</button>
-      <button @click="completePayment" class="bg-blue-500 text-white px-4 py-2 rounded">
-        模擬付款完成
-      </button>
-    </div>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
+          模擬付款完成
+        </button>
+      </div>
     </Form>
 
   </div>
+</div>  
 </template>
 

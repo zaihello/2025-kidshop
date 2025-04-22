@@ -484,6 +484,7 @@ export const usePaymentStore =defineStore("payment",{
           user.address = `${user.zipcode} ${user.county} ${user.district} ${user.address}`
 
           // console.log('✅ 載入後的 cartData:', cartStore.cartData);
+          
         
         
           this.hasAttemptedSubmit = true;//已嘗試送出訂單 true判斷驗證

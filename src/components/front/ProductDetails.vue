@@ -1,13 +1,11 @@
-<!-- 原始版 -->
+<!-- 商品詳情頁面 -->
 <template>
-    <!-- 商品詳情頁面 -->
-    <!-- class="container mx-auto p-8" -->
     <div v-if="product" class="w-full 2xl:w-3/4 2xl:m-auto py-8 px-4">
       <!-- Breadcrumbs -->
       <div class="text-sm text-gray-500 mb-4">
         <router-link to="/" class="hover:underline">Home</router-link> /
         <router-link 
-          :to="{ name: 'Shop', query: { category: product.category.toLowerCase() } }" 
+          :to="{ name: 'Shop', query: { category: product.category} }" 
           class="hover:underline">{{ product.category }}</router-link> /
         <span>{{ product.name }}</span>
       </div>
@@ -65,7 +63,6 @@
           <div class="mt-4">
             <label class="block font-medium text-gray-700">Size:</label>
             <div class="flex flex-wrap gap-2">
-            <!-- ui只顯示唯一的尺寸選項，ui調整格式，ui調整排序-->
               <button 
                 v-for="(size, index) in sizeOptions" 
                 :key="index" 
@@ -88,7 +85,6 @@
           <div class="mt-4">
             <label class="block font-medium text-gray-700">Color:</label>
             <div class="flex flex-wrap gap-3 mt-2">
-              <!-- ui只顯示唯一的color選項 -->
               <button 
                 v-for="(color,index) in availableColors" 
                 :key="index" 
@@ -100,7 +96,7 @@
           </div>
 
           <div class="flex justify-between flex-wrap">
-            <!-- 數量控制 原本-->
+            <!-- 數量控制 -->
             <div>
               <div class="mt-4 flex items-center space-x-4 p-2 border rounded-lg w-fit"
               :class="(selectedColor && selectedSize && isOutOfStock(selectedColor, selectedSize)) ? 'bg-gray-300 cursor-not-allowed' : 'bg-white'">
@@ -136,8 +132,6 @@
           </div>
           </div>
  
-
-  
           <!-- Wishlist and Share Links -->
           <div class="flex items-center mt-6 space-x-4">
             <div class="flex items-center space-x-1 text-gray-600 hover:text-blue-500">
@@ -165,21 +159,19 @@
     <div v-else class="w-full 2xl:w-3/4 2xl:m-auto py-8 px-4">
       <p>正在加載商品資料...</p>
     </div>
-  </template>
+</template>
   
   <script>
   import { useWishlistStore } from '../../stores/wishlistStore'
   import { useAuthStore } from '../../stores/authStore'
   import { useCartStore } from '../../stores/cartStore'
   import { useProductStore } from '../../stores/productStore'
-  import { useAdminProductStore } from '../../stores/adminProductStore'
 
   import axios from 'axios';
   
   export default {
     data() {
       return {
-        // products:[],//所有商品資料
         product: null, // 個別商品資料
         errorMessage: null, // 錯誤信息
         activeImage: '', // 當前顯示的主圖片
@@ -187,14 +179,6 @@
         quantity: 1, // 商品數量
         selectedSize: null, //使用者選擇的尺寸（對應 product.variants.size）
         selectedColor: null, //使用者選擇的顏色（對應 product.colors.color）
-        // isInWishlist: false, // 新增 預設為未加入追蹤
-        // wishlistItemId: null, // 新增 儲存追蹤項目的 ID
-        // token:'',//新增
-        // user_id:'',//新增
-        // isFavorite: false,// 新增 收藏狀態
-        // token: localStorage.getItem('token') || '',//新增 初始化時嘗試從 Local Storage 中讀取已存的 token 值，如果沒有則預設為空字串。
-        // wishlistStore: useWishlistStore(),
-        //3/27
         selectedVariant: null,//使用者根據選擇的 color 和 size 所對應的 variant 物件。
       };
     },
@@ -212,16 +196,9 @@
       productStore(){
         return useProductStore()
       },
-      adminProductStore(){
-        return useAdminProductStore()
-      },
       isInWishlist() {
         return this.wishlistStore.isInWishlist(this.product.id);
       },
-    //   isInWishlist() {
-    //   return (productId) =>
-    //     this.wishlistStore.wishlist.some((item) => item.product_Id === productId);
-    // },
       //縮圖區： 第一張是 product.imgurl ；後面是 colors.imageurl
       allImages() {
       // 先拿到所有顏色的圖片 URL，並過濾掉空字串
@@ -232,13 +209,11 @@
       // 返回包含主圖和非空顏色圖片的陣列
       return [this.product.imgurl, ...colorImages];
     },
-      //3/27
        // 獲取所有可選顏色（無論有無庫存）
       availableColors() {
         return [...new Set(this.product.variants.map(v => v.color))];
       },
        // 獲取當前顏色的所有尺寸，不重覆，並尺寸排序（無論有無庫存）
-   
       sizeOptions() {
         return [...new Set(this.product.variants
           .filter(v => this.selectedColor ? v.color === this.selectedColor : true)
@@ -255,19 +230,13 @@
           return numA - numB;
         });
       },
-
-    
-     // 判斷當前選擇的尺寸是否缺貨 原本
+     // 判斷當前選擇的尺寸是否缺貨
       isOutOfStock() {
         return (color, size) => {
           const variant = this.product.variants.find(v => v.color === color && v.size === size);
           return !variant || variant.count === 0;
         };
       },
-
-
-   
-
     },
    
     methods: {
@@ -279,11 +248,7 @@
           const response = await axios.get(`https://204ed3432b06d7af.mokky.dev/product/${productId}`);
           this.product = response.data;
 
-          // 新增 在獲取到商品資料後立即檢查追蹤清單狀態
-          //  this.checkWishlistStatus(this.product); 
-
           this.setActiveImage();  // 預設設定第一張圖片為主要圖片
-          // this.setSelectedSize(); // 預設設定第一個尺寸為選項
           console.log('詳細頁面商品資料',this.product)
         
         } catch (error) {
@@ -320,7 +285,7 @@
         }
         this.activeImage = this.allImages[this.activeImageIndex];
       },
-        //3/28
+       
       decrementQuantity() {
         if (this.quantity > 1) {
           this.quantity--;
@@ -343,17 +308,14 @@
         if (colorData && colorData.imageurl) {
           this.setActiveImage(colorData.imageurl);
         }
-
        
         // 如果目前選擇的尺寸仍然存在於新顏色的 sizeOptions，就保持選擇
         if (!this.sizeOptions.includes(this.selectedSize)) {
           this.selectedSize = null; // 只有當已選尺寸不在新顏色內時才重設
         }
-        // this.selectedVariant = null
-
+       
       },
      
-
 
       //選染ui(點擊尺寸外框黑色)
       selectSize(size) {
@@ -375,79 +337,7 @@
           this.selectedVariant = null;
         }
       },
-      //要看看可刪?
-      // async addToCart() {
-      //   // const token = localStorage.getItem('token');
-      //   const token = this.authStore.token
-      //   if (!token) {
-      //     alert('請登入以將商品加入購物車！');
-      //     this.$router.push('/login');
-      //     return;
-      //   }
-        
-      //   try {
-      //     await axios.post(
-      //       // _relations=products
-      //       'https://204ed3432b06d7af.mokky.dev/carts',
-      //       {
-               
-      //         product_Id: this.product.id,
-      //         product_Name: this.product.name,
-      //         product_Price: this.product.price,
-      //         product_Image: this.activeImage,
-      //         quantity: this.quantity,
-      //         size: this.selectedSize,
-      //         color: this.selectedColor,
-      //       },
-      //       { headers: { Authorization: `Bearer ${token}` } }
-      //     );
-      //     alert('已加入購物車！');
-      //   } catch (error) {
-      //     console.error('加入購物車失敗', error);
-      //   }
-      // },
-      //商品加入購物車功能
-      // async addItemToCart() { 
-      //   const token = this.authStore.token;
-        
-      //   // 🔹 檢查是否已登入
-      //   if (!token) {
-      //     alert('請登入以將商品加入購物車！');
-      //     this.$router.push('/login');
-      //     return;
-      //   }
-
-      //   // 🔹 檢查是否選擇了尺寸和顏色
-      //   if (!this.selectedSize || !this.selectedColor) {
-      //     alert('請選擇尺寸和顏色');
-      //     return;
-      //   }
-
-        
-      //   try {
-      //     await axios.post(
-      //       'https://204ed3432b06d7af.mokky.dev/carts',
-      //       {
-      //         product_Id: this.product.id,
-      //         Name: this.product.name,
-      //         Price: this.product.price || 0,//不要空值是null
-      //         Image: this.activeImage,
-      //         quantity: this.quantity,
-      //         size: this.selectedSize,
-      //         color: this.selectedColor,
-      //       },
-      //       { headers: { Authorization: `Bearer ${token}` } }
-      //     );
-         
-
-      //     // 🔹 加入購物車成功後，同步更新 Pinia cartStore
-      //     this.cartStore.addItemToCart(this.product, this.selectedSize, this.selectedColor, this.quantity);
-
-      //     alert('已加入購物車！');
-      //   } catch (error) {
-      //     console.error('加入購物車失敗', error);
-      //   }
-      // },
+      //加入購物車按鈕
       addItemToCart() {
         const token = this.authStore.token;
         // 🔹 檢查是否已登入
@@ -469,7 +359,6 @@
         this.cartStore.buyNow(this.product, this.selectedSize, this.selectedColor, this.quantity);
       },
 
-      // { useWishlistStore }
       toggleWishlist() {
         this.wishlistStore.toggleWishlist(this.product);
       },
@@ -477,11 +366,8 @@
     mounted() {
       const productId = this.$route.params.id;// 從路由參數中獲取商品 ID
       this.productDetails(productId);// 加載商品詳細資料
-      this.wishlistStore.getWishlist(); // 初始化時獲取追蹤清單
-      // this.setSelectedSize();
     },
 
-   
   }
   </script>
 

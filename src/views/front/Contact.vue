@@ -6,7 +6,7 @@ export default{
 }
 </script>
 <template>
-    <div class="w-full xl:w-3/4 p-6  m-auto">
+    <div class="w-full xl:w-3/4 p-6 m-auto pt-20 px-8">
         <!-- 區塊1 -->
         <div class="flex flex-col w-full md:flex-row py-10 ">
             <div class="md:w-1/2 ">
@@ -60,6 +60,10 @@ export default{
                 </form>
             </div>
         </div>
+        
     </div> 
-    <SwiperContact></SwiperContact>
+    <div class="pb-20 px-8">
+        <SwiperContact></SwiperContact>
+    </div>
+    
 </template>

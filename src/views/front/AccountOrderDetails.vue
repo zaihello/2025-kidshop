@@ -1,80 +1,61 @@
 <script>
 import axios from 'axios'
 import { useAuthStore } from '../../stores/authStore'
-import { usePaymentStore } from '../../stores/paymentStore'
 
 export default {
   data() {
     return {
-      order: null,
+      order: null,//訂單id的資料
       loading: true,
-    }
-  },
-  // computed:{
-  //   paymentStore(){
-  //     return usePaymentStore()
-  //   },
-  // },
-  async created() {
-    const id = this.$route.params.id
-    const authStore = useAuthStore()
-    const token = authStore.token
-
-    try {
-      const { data } = await axios.get(`https://204ed3432b06d7af.mokky.dev/orders/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      // 發票類型的對應顯示名稱
+      invoiceTypeMap: {
+          '電子發票': '二聯式電子發票',
+          '統一編號': '三聯式電子發票',
+          '手機條碼': '手機條碼載具',
+          '捐贈發票': '捐贈發票'
         },
-      })
-      this.order = data
-    } catch (error) {
-      console.error('取得訂單失敗', error)
-    } finally {
-      this.loading = false
     }
   },
-  // async created() {
-  //   await this.getOrders()
-  // },
+ 
+  async created(){
+    await this.getOrders()
+  },
   methods: {
-    formatDate(datetime) {
-      const date = new Date(datetime)
-      return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
-    },
-    // getOrderStatus(status) {
-    //   const map = {
-    //     pending: '處理中',
-    //     confirmed: '已確認',
-    //     shipped: '已出貨',
-    //     delivered: '已送達',
-    //     cancelled: '已取消',
-    //   }
-    //   return map[status] || '未知狀態'
-    // },
-    // getPaymentStatus(status) {
-    //   return status === 'paid' ? '已付款' : '未付款'
-    // },
-    maskPhone(phone) {
-      return phone ? phone.replace(/(\d{4})\d{3}(\d{3})/, '$1***$2') : ''
-    },
-  //  { data } = await axios.get(`https://204ed3432b06d7af.mokky.dev/cartsdata?userId=${userId}`)
-  //   }, async getCartData(userId){
-  //     const 
+    //取得該使用者的訂單id資料
     async getOrders() {
+      const id = this.$route.params.id//重點
       const authStore = useAuthStore()
       const userId = authStore.id
       const token = authStore.token
 
       try {
-        const { data } = await axios.get(`https://204ed3432b06d7af.mokky.dev/orders?userId=${userId}`, {
+        const { data } = await axios.get(`https://204ed3432b06d7af.mokky.dev/orders/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
-        this.orders = data
+    
+        this.order = data
       } catch (error) {
         console.error('取得歷史訂單失敗', error)
+      } finally{
+        this.loading = false
       }
+    },
+
+    //日期格式:2025-4-23
+    formatDate(datetime) {
+      const date = new Date(datetime)
+      return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+    },
+    //格式化金額(3,000)
+    formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD', // 可以更改為其他貨幣，如 'TWD'顯示 NT$或 'EUR'
+        minimumFractionDigits: 0,//顯示為 $50.00
+        maximumFractionDigits: 2,
+      }).format(value);
     },
   },
 }
@@ -97,9 +78,9 @@ export default {
               <p class="text-gray-500">顏色:{{ item.color }}</p>
               <p class="text-gray-500">尺寸:{{ item.size }}</p>
               <p class="text-gray-500">數量：{{ item.quantity }}</p>
-              <p class="text-gray-500">單價：$ {{ item.price }}</p>
+              <p class="text-gray-500">單價： {{ formatCurrency(item.price) }}</p>
             </div>
-            <div class="font-bold text-right">小計:$ {{ item.subtotal }}</div>
+            <div class="font-bold text-right">小計: {{ formatCurrency(item.subtotal) }}</div>
           </div>
         </div>
   
@@ -107,7 +88,6 @@ export default {
         <div class="space-y-2">
           <p>訂單號碼：{{ order.id }}</p>
           <p>訂單日期：{{ formatDate(order.created_at) }}</p>
-          <!-- {{ getOrderStatus(order.status) }} -->
           <p>訂單狀態：<span class="text-blue-600">{{ order.status }}</span></p>
         </div>
   
@@ -122,30 +102,21 @@ export default {
             <!-- <span>送貨狀態：{{ order.delivery_status }}</span> -->
             <!-- <span>備註：{{ order.note || '無' }}</span> -->
           </div>
-          <div class="mt-2">
-            <!-- <button
-              v-if="order.shipping_method.includes('黑貓')"
-              class="text-indigo-600 hover:underline text-sm"
-            >
-              黑貓物流追蹤
-            </button> -->
-          </div>
         </div>
   
         <!-- 付款資訊 -->
         <div>
           <h3 class="font-semibold text-gray-700 mb-2">付款資訊</h3>
           <div class="grid grid-cols-2 gap-y-2 text-sm">
-            <!-- <span>付款方式：{{ order.payment_method }}</span> -->
             <span>付款方式：{{ order.payment_info.method }}</span>
-            <span>付款狀態：{{order.payment_status}}</span>
-            <span>發票形式：{{ order.invoice_type }}</span>
+            <span>付款狀態：{{order.payment_info.status}}</span>
+            <span>發票形式：{{ invoiceTypeMap[order.invoice_info.type] || '未知類型' }}</span>
           </div>
         </div>
   
         <!-- 總金額 -->
         <div class="text-right text-lg font-bold">
-          總計：NT$ {{ order.final_price }}
+          總計： {{ formatCurrency(order.final_price) }}
         </div>
       </div>
     </div>
@@ -153,7 +124,4 @@ export default {
   
 
   
-  <style scoped>
-  /* 可以根據需求加上動畫或 icon */
-  </style>
-  
+ 

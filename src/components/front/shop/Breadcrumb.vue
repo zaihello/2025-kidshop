@@ -1,4 +1,5 @@
-<!-- components/Breadcrumb.vue -->
+<!-- Home/全部商品/緊身褲 組件-->
+
 <template>
     <nav class="text-gray-600 mb-4" aria-label="breadcrumb">
       <ol class="list-reset flex">

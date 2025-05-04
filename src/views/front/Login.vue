@@ -1,23 +1,72 @@
+
+<script>
+import { Form, Field } from 'vee-validate';
+import * as Yup from 'yup';
+import { login } from '../../stores/authService'
+  
+export default{
+  components:{Form, Field},
+  data() {
+    return {
+      form: {
+         email: "",
+        password: "",
+      },
+      showPassword: false,
+      schema:Yup.object().shape({
+      email: Yup.string().email('請輸入有效的 Email').required('請輸入 Email'),
+      password: Yup.string().min(6, '密碼至少需 6 個字元').required('請輸入密碼'),
+      })
+    };
+  },
+  methods:{
+    async loginUser() {
+      try {
+        // 調用 authService 的 會員login 方法
+        const data = await login({
+           email: this.form.email,
+          password: this.form.password,
+        });
+  
+        alert('登入成功！');
+        console.log('登入後的數據:', data);
+  
+        // 登入後跳轉頁面
+        this.$router.push('/shop');
+      } catch (error) {
+        console.error('Login error:', error.message);
+        alert(error.message); // 提示錯誤訊息
+      }
+    },
+      // 密碼顯示切換
+    togglePassword() {
+      this.showPassword = !this.showPassword;
+    },
+  },
+}
+    
+</script>
+    
 <template>
     <!-- 使用 flex 和 justify-center 將卡片置中。 -->
-    <div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="flex items-center justify-center min-h-screen bg-stone-200">
       <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">會員登入</h2>
-        <form @submit.prevent="loginUser">
-  
+        <Form :validation-schema="schema" @submit="loginUser" v-slot="{ errors }">
           <!-- Email -->
           <div class="mb-4">
             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
               Email  <span class="text-red-500">*</span>
             </label>
-            <input
+            <Field
+              name="email"
               v-model="form.email"
               type="email"
               id="email"
               placeholder="請輸入您的 email"
               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
-              required
             />
+            <span class="text-red-500 text-sm">{{ errors.email }}</span>
           </div>
   
           <!-- Password -->
@@ -27,14 +76,14 @@
             </label>
             <div class="relative">
                 <!-- 切換密碼可見性使用 showPassword -->
-                 <!--   -->
-              <input
+              <Field
+                name="password"
                 v-model="form.password"
                :type="showPassword ? 'text' : 'password'"
                 id="password"
                 placeholder="請輸入您的 password"
                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
-                required
+                
               />
               <!-- 眼睛圖標切換 --> 
                <button
@@ -42,19 +91,14 @@
                 @click="togglePassword"
                 class="absolute right-2 top-2 text-gray-500 focus:outline-none"
                 >  
-                <!-- 顯示密碼的眼睛圖標 -->
-                <span class="material-icons" v-if="showPassword">
-                            visibility
-                </span> 
-                <!-- 隱藏密碼的斜槓眼睛圖標 -->
-                 <span class="material-icons" v-else>
-                    visibility_off
-                </span> 
+                 <!-- 顯示/隱藏 密碼的眼睛圖標 -->
+                 <span class="material-icons">
+                  {{ showPassword ? 'visibility' : 'visibility_off' }}
+                </span>
                </button>
             </div>
+            <span class="text-red-500 text-sm">{{ errors.password }}</span>
           </div>
-  
-          
   
           <!-- Submit Button -->
           <button
@@ -63,120 +107,9 @@
           >
             登入
           </button>
-        </form>
+        </Form>
       </div>
     </div>
 </template>
   
-  <script>
-  import { login } from '../../stores/authService'
-
-  export default{
-    data() {
-       return {
-         form: {
-           email: "",
-           password: "",
-         },
-         showPassword: false,
-       };
-    },
-    methods:{
-      async loginUser() {
-        try {
-          // 調用 authService 的 會員login 方法
-          const data = await login({
-            email: this.form.email,
-            password: this.form.password,
-          });
-
-          alert('登入成功！');
-          console.log('登入後的數據:', data);
-
-          // 登入後跳轉頁面
-          this.$router.push('/shop');
-        } catch (error) {
-          console.error('Login error:', error.message);
-          alert(error.message); // 提示錯誤訊息
-        }
-      },
-       // 密碼顯示切換
-       togglePassword() {
-        this.showPassword = !this.showPassword;
-      },
-      //axios版本
-    //   async loginUser() {
-    // try {
-    //     // 使用 Axios 發送 POST 請求
-    //     const { data } = await axios.post('https://204ed3432b06d7af.mokky.dev/auth', {
-    //         email: this.form.email,
-    //         password: this.form.password,
-    //     });
-
-    //     console.log(data);
-
-    //     // 將 token 儲存到 localStorage
-    //     localStorage.setItem("token", data.token);
-    //     console.log('Token', data.token);
-
-    //     alert("登入成功!");
-    //     // 登入後轉跳到的頁面
-    //     this.$router.push("/shop");
-    // } catch (error) {
-    //     console.error("Login error:", error);
-
-    //     // 額外的錯誤提示或處理
-    //     alert("登入失敗，請檢查您的帳號密碼是否正確！");
-    // }
-    //   },
-      
-    },
-
-  }
-  // export default {
-  //   data() {
-  //     return {
-  //       form: {
-  //         email: "",
-  //         password: "",
-  //       },
-  //       showPassword: false,
-  //     };
-  //   },
-  //   methods: {
-      // async loginUser() {
-      //   try {
-      //       // MOKKY規範用fetch
-      //     const res = await fetch('https://204ed3432b06d7af.mokky.dev/auth', {
-      //       method: 'POST',
-      //       headers: { 
-      //           'Content-Type': 'application/json' 
-      //       },
-      //       body: JSON.stringify({ 
-      //           email: this.form.email, 
-      //           password: this.form.password 
-      //       }),
-      //     });
-      //     const data = await res.json();
-      //     console.log(data)
-        
-         
-      //       // 將 token 儲存到 localStorage
-      //       localStorage.setItem("token", data.token);
-      //       console.log('Token',data.token)
-      //       alert("登入成功!");
-      //       // 登入後轉跳到的頁面
-      //       this.$router.push("/shop");
-         
-      //   } catch (error) {
-      //     console.error("Login error:", error);
-      //   }
-      // },  
-       
-      // 密碼顯示切換
-      // togglePassword() {
-      //   this.showPassword = !this.showPassword;
-      // }
-  //  },
-  </script>
   

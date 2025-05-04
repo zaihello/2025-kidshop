@@ -1,9 +1,9 @@
+
 <script>
 
 import CartNavbar from '../../components/front/CartNavbar.vue'
 import { useCartStore } from '../../stores/cartStore'
 import { usePaymentStore } from '../../stores/paymentStore'
-import test4 from '../front/test4.vue'
 
 //引入 VeeValidate 所需模組
 import { defineRule, configure, Field, Form, ErrorMessage } from 'vee-validate';  
@@ -51,19 +51,12 @@ defineRule('twMobile', value => {
   return /^09\d{8}$/.test(value) || '手機格式錯誤，請輸入 09 開頭的 10 碼號碼'
 })
 
-// defineRule('required', value => {
-//   return value ? true : '此欄位為必填';
-// });
-
-
 export default {
-  // name: "CheckoutPage",
-  components:{CartNavbar,Field,Form,ErrorMessage,test4},
+  components:{CartNavbar,Field,Form,ErrorMessage,},
   data(){
     return{
-      storeName: '',
-      storeAddress: '',
-      
+      storeName: '',//7-11選擇的門市 之後補上
+      storeAddress: '',//7-11選擇的地址 之後補上
     }
   },
   computed:{
@@ -120,82 +113,59 @@ export default {
     }
   },
   methods:{
-    // openMap() {
-    //   const MerchantID = '2000132'; // 綠界測試用 MerchantID（固定）
-    //   const ServerReplyURL = encodeURIComponent('https://zaihello.github.io/2025-kidshop/?#/cart/paylist');//隨便填一個格式正確的網址
-    //   const URL = `https://logistics-stage.ecpay.com.tw/Express/map?MerchantID=${MerchantID}&LogisticsType=CVS&LogisticsSubType=UNIMART&IsCollection=Y&ServerReplyURL=${ServerReplyURL}`;
-
-    //   console.log('開啟地圖網址:', URL); // 測試網址是否正確
-
-    //   window.open(URL, 'mapWindow', 'width=500,height=600');// 開啟地圖視窗
-    //   console.log(URL);
-    // },
-    // receiveStoreData(event) {
-    //   console.log('收到門市資料:', event.data); // ← 加這行來測試
-    //   if (event.data?.CVSStoreID) {
-    //     this.storeName = event.data.CVSStoreName;
-    //   this.storeAddress = event.data.CVSAddress;
-    //   }
-    // },
-    //ok
+    // 支付按紐
     async submitOrder(){
-      // await this.paymentStore.submitOrder() // 等待訂單送出成功 加上await
-      // this.$router.push("/cart/orderdone"); // 再跳頁，就能抓到最新資料
-      console.log('💥 submitOrder() 被執行');
-
-    
       const success = await this.paymentStore.submitOrder(this.$router);
       if (success) {
         console.log("✅ 訂單建立成功");
       }
 
     },
+    //格式化金額(3,000)
+    formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD', // 可以更改為其他貨幣，如 'TWD'顯示 NT$或 'EUR'
+        minimumFractionDigits: 0,//顯示為 $50.00
+        maximumFractionDigits: 2,
+      }).format(value);
+    },
  
   },
-  mounted(){
-    window.addEventListener("message", this.receiveStoreData);
-    
-  },
-  // beforeDestroy() {
-  //       window.removeEventListener('message', this.receiveStoreData);  // 移除事件監聽
-  //     }
-  beforeUnmount() {
-    window.removeEventListener('message', this.receiveStoreData);
-  },
+  
 
 };
 </script>
 
 <template>
-  <div class="bg-stone-200">
-    <Form @submit="submitOrder" class="w-full 2xl:w-3/4 2xl:m-auto p-8">
-      <!-- 1.2.3. -->
-      <div>
+  <div class="bg-stone-200 pt-16 pb-28">
+    <Form @submit="submitOrder" class="w-full 2xl:w-3/4 2xl:m-auto px-8">
+      <!-- 導覽列 -->
+      <div class="mb-14">
         <CartNavbar/>
       </div>
-      <!-- <test4/> -->
       <!-- 商品 + 填資料 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- 訂單資訊(有勾選的商品) -->
-        <div class="bg-gray-100 p-6 rounded-lg shadow-md w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-14">
+        <!-- 原本 訂單資訊(有勾選的商品) -->
+        <div class="bg-gray-100 rounded-lg shadow-md w-full p-6">
           <!-- 表頭 (僅 md 以上顯示) -->
           <div class="hidden md:flex font-medium text-gray-700 border-b pb-2 mb-4">
-            <div class="flex-[2]">商品名稱</div>
-            <div class="flex-[1]">顏色</div>
-            <div class="flex-[1]">尺寸</div>
-            <div class="flex-[1.5]">售價</div>
-            <div class="flex-[1]">數量</div>
-            <div class="flex-[1.5]">金額</div>
+            <div class="flex items-center basis-[40%]">商品名稱</div>
+            <div class="flex items-center basis-[15%]">顏色</div>
+            <div class="flex items-center basis-[15%]">尺寸</div>
+            <div class="flex items-center basis-[15%] ">售價</div>
+            <div class="flex items-center basis-[10%]">數量</div>
+            <div class="flex items-center basis-[10%] justify-end">金額</div>
           </div>
 
           <!-- 商品資料列 -->
           <div
             v-for="item in cartStore.selectedtItems"
             :key="item.id"
-            class="flex flex-col md:flex-row md:items-center gap-4 py-4 border-b"
+            class="flex flex-col md:flex-row py-4 border-b gap-2"
           >
             <!-- 商品名稱 + 圖片 -->
-            <div class="flex items-center gap-3 flex-[2]">
+            <div class="flex items-center gap-3 basis-[40%]">
               <img
                 :src="item.product.colors[0].imageurl"
                 alt="商品圖片"
@@ -208,33 +178,33 @@ export default {
             </div>
 
             <!-- 顏色 -->
-            <div class="flex-[1]">
+            <div class="basis-[15%]">
               <div class="md:hidden text-sm text-gray-500">顏色</div>
               {{ item.product.colors[0].color }}
             </div>
 
             <!-- 尺寸 -->
-            <div class="flex-[1]">
+            <div class="basis-[15%]">
               <div class="md:hidden text-sm text-gray-500">尺寸</div>
               {{ item.product.variants[0].size }}
             </div>
 
             <!-- 售價 -->
-            <div class="flex-[1.5]">
+            <div class="basis-[15%]">
               <div class="md:hidden text-sm text-gray-500">售價</div>
-              ${{ item.price }}
+              {{ formatCurrency(item.price) }}
             </div>
 
             <!-- 數量 -->
-            <div class="flex-[1]">
+            <div class="basis-[10%]">
               <div class="md:hidden text-sm text-gray-500">數量</div>
               {{ item.quantity }}
             </div>
 
             <!-- 金額 -->
-            <div class="flex-[1.5]">
-              <div class="md:hidden text-sm text-gray-500">金額</div>
-              ${{ item.subTotal }}
+            <div class="basis-[10%] text-right">
+              <div class="md:hidden text-sm text-gray-500 ">金額</div>
+              {{ formatCurrency(item.subTotal) }}
             </div>
           </div>
 
@@ -248,7 +218,7 @@ export default {
                   共 <span class="text-red-500 font-bold">{{ cartStore.selectedItemsCount }}</span> 件商品 商品總價
                 </span>
                 <span class="font-semibold tracking-wide">
-                  ${{ cartStore.totalAmount.toLocaleString() }}
+                  {{ formatCurrency(cartStore.totalAmount) }}
                 </span>
               </div>
             </div>
@@ -261,18 +231,18 @@ export default {
                     v-if="paymentStore.remainingForFreeShipping > 0"
                     class="text-red-600 border border-red-500 px-2 py-0.5 rounded text-xs font-medium"
                   >
-                    再購買 {{ paymentStore.remainingForFreeShipping }} 元即可享免運！
+                    再購買 {{ formatCurrency(paymentStore.remainingForFreeShipping) }} 元即可享免運！
                   </span>
                   <span
                     v-else
                     class="text-red-600 border border-red-500 px-2 py-0.5 rounded text-xs font-medium"
                   >
-                    滿 {{ paymentStore.selectedMethod.freeShippingThreshold }} 免運！
+                    滿 {{ formatCurrency(paymentStore.selectedMethod.freeShippingThreshold) }} 免運！
                   </span>
                   <span>運費</span>
                 </div>
                 <span class="font-semibold tracking-wide">
-                  ${{ paymentStore.shippingFee.toLocaleString() }}
+                  {{ formatCurrency(paymentStore.shippingFee) }}
                 </span>
               </div>
             </div>
@@ -286,20 +256,20 @@ export default {
             <div class="flex justify-end">
               <div class="w-full max-w-sm flex justify-between items-center font-bold text-lg">
                 <span>總付款金額</span>
-                <span class="text-red-600">${{ cartStore.finalTotal.toLocaleString() }}</span>
+                <span class="text-red-600">{{ formatCurrency(cartStore.finalTotal) }}</span>
               </div>
             </div>
           </div>
         </div>
+       
          <!-- 帳單資訊  VeeValidate版-->
-        <div class="bg-white p-6 rounded-lg shadow-md space-y-4">    
-         <!-- .prevent 不會讓表單真的送出（例如刷新頁面或跳轉 @submit.prevent="submitOrder"-->
+        <div class="bg-white p-6 rounded-lg shadow-md space-y-10">    
             <!-- 訂購人資料 -->
-            <div>
-              <h2 class="text-2xl font-semibold mb-4">訂購人資料</h2>
-              <!-- 姓名 418-->
-              <div class="mb-4">
-                <label for="user_name" class="block text-sm font-medium">姓名*</label>
+            <div class="space-y-3">
+              <h2 class="text-2xl font-semibold ">訂購人資料</h2>
+              <!-- 姓名 -->
+              <div class="space-y-2">
+                <label for="user_name" class="block text-sm font-medium">姓名<span class="text-red-600">*</span></label>
                 <Field
                   id="user_name"
                   name="user_name"
@@ -322,8 +292,8 @@ export default {
               
               <!-- 貨到付款 信用卡線上付款 LINE Pay-->
               <!-- 地址 -->
-              <div v-if="['cod', 'credit', 'linepay'].includes(paymentStore.selectedMethod?.value)" class="flex flex-wrap">
-                <p class="w-full mb-2">地址*</p>
+              <div v-if="['cod', 'credit', 'linepay'].includes(paymentStore.selectedMethod?.value)" class="flex flex-wrap space-y-2">
+                <p class="w-full">地址<span class="text-red-600">*</span></p>
                 <div class="grid grid-cols-3 gap-2 w-full">
                   <!-- 縣市 -->
                   <Field
@@ -377,9 +347,9 @@ export default {
                 </div>
               </div>
 
-              <!-- Email 418-->
-              <div class="mb-4">
-                <label for="email" class="block text-sm font-medium">Email*</label>
+              <!-- Email-->
+              <div class="space-y-2">
+                <label for="email" class="block text-sm font-medium">電子郵件<span class="text-red-600">*</span></label>
                 <Field
                   id="email"
                   name="email"
@@ -392,8 +362,8 @@ export default {
                 <ErrorMessage name="email" class="text-red-500 text-sm mt-1" />
               </div>
               <!-- 電話 -->
-              <div>
-                <label for="tel" class="block text-sm font-medium">電話*</label>
+              <div class="space-y-2">
+                <label for="tel" class="block text-sm font-medium">電話<span class="text-red-600">*</span></label>
                 <Field
                   name="tel"
                   v-model="paymentStore.orderInfo.user_info.tel"
@@ -406,11 +376,11 @@ export default {
               </div>
             </div>
             <!-- 收件人資料 -->
-            <div>
+            <div class="space-y-3">
               <!-- 收件件人資料 貨到付款 信用卡線上付款 LINE Pay(可用 LINE Points 折抵)-->
-              <div v-if="['cod','credit','linepay'].includes(paymentStore.selectedMethod?.value)" class="flex flex-wrap">
-                <h2 class="text-2xl font-semibold mb-4">收件人資料</h2>
-                <div>
+              <div v-if="['cod','credit','linepay'].includes(paymentStore.selectedMethod?.value)" class="flex flex-wrap items-center gap-2">
+                <h2 class="text-2xl font-semibold">收件人資料</h2>
+                <div class="flex items-center gap-1">
                   <input 
                     type="checkbox" 
                     id="sameAsUserInfo" 
@@ -420,9 +390,9 @@ export default {
                 </div> 
               </div>
              
-              <!-- 姓名 418-->
-              <div class="mb-4">
-                <label for="shipping_name" class="block text-sm font-medium">姓名*</label>
+              <!-- 姓名-->
+              <div class="space-y-2">
+                <label for="shipping_name" class="block text-sm font-medium">姓名<span class="text-red-600">*</span></label>
                 <Field
                   id="shipping_name"
                   name="shipping_name"
@@ -445,8 +415,8 @@ export default {
             
               <!-- 貨到付款 信用卡線上付款 LINE Pay(可用 LINE Points 折抵) 原本-->
               <!-- 收件人地址 -->
-              <div v-if="['cod', 'credit', 'linepay'].includes(paymentStore.selectedMethod?.value)" class="flex flex-wrap">
-                <p class="w-full mb-2">地址*</p>
+              <div v-if="['cod', 'credit', 'linepay'].includes(paymentStore.selectedMethod?.value)" class="flex flex-wrap space-y-2">
+                <p class="w-full">地址<span class="text-red-600">*</span></p>
                 <div class="grid grid-cols-3 gap-2 w-full">
                   <!-- 縣市 -->
                   <Field
@@ -499,9 +469,9 @@ export default {
                   <ErrorMessage name="shipping_address" class="text-red-500 text-sm col-span-3" />
                 </div>
               </div>
-              <!-- Email 418-->
-              <div class="mb-4">
-                <label for="shipping_email" class="block text-sm font-medium">電子郵件*</label>
+              <!-- Email -->
+              <div class="space-y-2">
+                <label for="shipping_email" class="block text-sm font-medium">電子郵件<span class="text-red-600">*</span></label>
                 <Field
                   id="shipping_email"
                   name="shipping_email"
@@ -513,9 +483,9 @@ export default {
                 />
                 <ErrorMessage name="shipping_email" class="text-red-500 text-sm mt-1" />
               </div>
-              <!-- 收件人電話 418-->
-              <div class="mb-4">
-                <label for="shipping_tel" class="block text-sm font-medium">電話 *</label>
+              <!-- 收件人電話 -->
+              <div class="space-y-2">
+                <label for="shipping_tel" class="block text-sm font-medium">電話<span class="text-red-600">*</span></label>
                 <Field
                   id="shipping_tel"
                   name="shipping_tel"
@@ -527,8 +497,8 @@ export default {
                 />
                 <ErrorMessage name="shipping_tel" class="text-red-500 text-sm mt-1" />
               </div>
-              <!-- 備註 418-->
-              <div class="mb-4">
+              <!-- 備註 -->
+              <div class="space-y-2">
                 <label for="shipping_comment" class="block text-sm font-medium">備註</label>
                 <Field
                   id="shipping_comment"
@@ -542,16 +512,16 @@ export default {
               </div>
             </div>
             <!-- 發票資訊 -->
-            <div class="mt-6">
-              <h2 class="text-lg font-semibold mb-3">發票資訊</h2>
+            <div class="space-y-3">
+              <h2 class="text-lg font-semibold">發票資訊</h2>
               <!-- 選擇發票類型 -->
-              <div class="flex gap-3 mb-4">
-                <!-- @click="paymentStore.orderInfo.invoice_info.type = type"   -->
+              <div class="flex flex-col sm:flex-row sm:flex-wrap w-full gap-3">
                 <button
                  v-for="type in ['電子發票', '手機條碼', '統一編號', '捐贈發票']"
                  :key="type"
                  type="button"
                  @click="paymentStore.selectInvoiceType(type)"
+                
                  :class="[
                    'px-4 py-2 rounded border',
                    paymentStore.orderInfo.invoice_info.type === type ? 'bg-blue-500 text-white' : 'bg-white text-gray-700'
@@ -598,22 +568,19 @@ export default {
                 <p>捐贈單位：{{ paymentStore.orderInfo.invoice_info.donationName }}</p>
                 <p>捐贈碼：{{ paymentStore.orderInfo.invoice_info.donationCode }}</p>
               </div>
-           </div>
-      <!-- 419 -->
+            </div>
         </div>
       </div>
       <!-- 購物、支付按鈕 -->
-      <div class="flex justify-between w-full gap-4 my-10">
-        <!-- type="button" -->
+      <div class="flex justify-between w-full gap-4">
         <button 
           @click="$router.push('/cart/cartlist')"
-          class="px-20 py-3 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition"
+          class="px-6 md:px-32 py-3 md:py-6 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition"
         >繼續購物
         </button>
-        <!-- type="button" 是按下觸發-->
         <button 
           type="submit"
-          class="px-20 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+          class="px-6 md:px-32 py-3 md:py-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
           >支付${{ cartStore.finalTotal.toLocaleString() }}</button>
       </div>
     </Form>

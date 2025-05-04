@@ -1,8 +1,5 @@
-<!-- 建立我們要顯示資料的欄位 -->
 
 <script>
-
-// 
 import { Swiper,SwiperSlide } from 'swiper/vue';
 // 上下一則導航；自動播放
 import { Navigation,Autoplay } from 'swiper/modules';
@@ -56,8 +53,7 @@ export default{
             <img :src="image" class="rounded-xl " alt="">
         </div>
     </swiper-slide>
-    <!-- <button class="swiper-button-next scale-50 overflow-hidden whitespace-nowrap"></button>
-    <button class="swiper-button-prev "></button> -->
+    
     </swiper>
     </div>
 </template>

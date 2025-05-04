@@ -12,7 +12,7 @@ defineRule('min', min)
 defineRule('max', max)
 defineRule('regex', regex)
 
-
+//信用卡驗證
 defineRule('expiryDate', (value) => {
   if (!value) return '請輸入有效期限';
 
@@ -50,9 +50,6 @@ export default {
     return {  
       orderData: null,//若資料來自 API，初始化設 null 最安全、語意最明確。代表「尚未載入資料」，適合用來區分「尚未請求」和「已請求但為空資料」的情況  
       orderId:'',//訂單編號
-      //   orderId: this.$route.params.orderId,
-
-      //421
       cardSegments: ['', '', '', ''],//卡號
       expiryDate: '',//有效期限
       cvc: '',//背面末3碼
@@ -67,6 +64,7 @@ export default {
     this.getOrder()
   },
   methods: {
+    //該使用者該次訂單
     async getOrder(){
           const authStore = useAuthStore();
           const userId = authStore.id;
@@ -137,7 +135,7 @@ export default {
       }
     },
 
-    //重新填寫按鈕 421
+    //重新填寫按鈕
     resetForm() {
       this.cardSegments = ['', '', '', '']
       this.expiryDate = "";
@@ -145,7 +143,7 @@ export default {
       this.captcha = "";
       this.generateCaptcha();
     },
-    //格式化日期 2025-04-14 19:05:09
+    //後端資料用格式化日期 2025-04-14 19:05:09
     formatDateTime(dateStr) {
       const date = new Date(dateStr)
       const year = date.getFullYear()
@@ -156,16 +154,25 @@ export default {
       const seconds = String(date.getSeconds()).padStart(2, '0')
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     },
+    //格式化金額(3,000)
+    formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD', // 可以更改為其他貨幣，如 'TWD'顯示 NT$或 'EUR'
+        minimumFractionDigits: 0,//顯示為 $50.00
+        maximumFractionDigits: 2,
+      }).format(value);
+    },
   }
 };
 </script>
 
 <template >
-<div class="bg-stone-200 py-20 p-8">  
-  <div v-if="orderData" class="max-w-xl mx-auto bg-white shadow-lg rounded-xl p-8 my-10">
+<div class="bg-stone-200 py-24 p-8">  
+  <div v-if="orderData" class="max-w-xl mx-auto bg-white shadow-lg rounded-xl px-6 py-12">
     <h2 class="text-2xl font-semibold mb-4 text-center">信用卡付款</h2>
     <p class="mb-2">訂單編號： {{ orderId }}</p>
-    <p class="mb-2">交易金額: ${{ orderData.final_price }}</p>
+    <p class="mb-2">交易金額: {{ formatCurrency(orderData.final_price) }}</p>
     <p class="mb-6">交易日期:{{ orderData.created_at }}</p>
     <!-- v-slot="{ errors }" -->
     <Form @submit="completePayment" >

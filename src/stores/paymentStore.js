@@ -1,23 +1,21 @@
-// 信用卡、到貨付款  OK
+//付款方式 只有信用卡、到貨付款  ok 
 import { defineStore } from 'pinia'
 import { useCartStore } from '../stores/cartStore'
 import { useAuthStore } from './authStore'
 import axios from 'axios'
 import { nextTick } from 'vue'
 
-// import router from 'router' 
-
-
 export const usePaymentStore =defineStore("payment",{
     state:() =>({
-        selectedPayment: "credit", // // 使用者選擇的付款方式 預設選中 LINE Pay
+        selectedPayment: "credit", // // 使用者選擇的付款方式 預設選中 信用卡
         freeShippingThreshold: 1000, // 🚛 免運門檻
+        //付款方式
         paymentMethods: [
             {
               value: "7-11",
               name: "7-11 - 取貨付款",
               description: "7-11：消費滿 1000 免運費，未滿酌收 50 元物流費。",
-              logo: "https://upload.wikimedia.org/wikipedia/commons/9/94/7-eleven_logo.svg",
+              logo: "7-11.png",
               freeShippingThreshold: 1000, // 🚛 免運門檻
               shippingFee: 50 // 📦 未達免運的運費
             },
@@ -25,7 +23,7 @@ export const usePaymentStore =defineStore("payment",{
               value: "familymart",
               name: "全家 - 取貨付款",
               description: "全家：消費滿 1000 免運費，未滿酌收 50 元物流費。",
-              logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Famiport.svg/1280px-Famiport.svg.png",
+              logo: "familymart.png",
               freeShippingThreshold: 1000, // 🚛 免運門檻
               shippingFee: 50 // 📦 未達免運的運費
             },
@@ -49,12 +47,12 @@ export const usePaymentStore =defineStore("payment",{
               value: "linepay",
               name: "LINE Pay",
               description: "(可用 LINE Points 折抵) 宅配：消費滿 1000 免運費，未滿酌收 60 元物流費。",
-              logo: "https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_Pay_logo.png",
+              logo: "",
               freeShippingThreshold: 1000, // 🚛 免運門檻
               shippingFee: 60 // 📦 未達免運的運費
             }
         ],
-        //填寫資料
+        //填寫表單資料
         orderInfo: {
           // 訂購人資料
           user_info: {
@@ -79,10 +77,9 @@ export const usePaymentStore =defineStore("payment",{
           },
           //付款方式
           payment_info: {
-            method: '信用卡線上付款', // 根據選擇的付款方式 '貨到付款'、'信用卡線上付款'、'LINE Pay'
-            transaction_id: '123456789', // 這裡可以在付款成功後獲取 如果是第三方付款才會有
-            // paid_at: new Date().toISOString(), // 如果當下就付款成功可填入 付款時間
-            paid_at: null
+            method: '', // 根據選擇的付款方式 '貨到付款'、'信用卡線上付款'、'LINE Pay'信用卡線上付款
+            transaction_id: '', // 付款成功後編號 TXN-1746272139893
+            paid_at: null// 付款時間
           },
           //送貨資訊
           delivery_info: {
@@ -91,7 +88,7 @@ export const usePaymentStore =defineStore("payment",{
           },
           //發票資訊
           invoice_info: {
-            type: "電子發票",   // "電子發票" | "手機條碼" | "統一編號" | "捐贈發票"
+            type: "",   // "電子發票" | "手機條碼" | "統一編號" | "捐贈發票"
             phoneCarrier: "",  // 輸入手機載具條碼，例如：/ABC1234
             taxId:"",             // 輸入統一編號
             donationCode: "", // 儲存捐贈碼5620
@@ -99,10 +96,8 @@ export const usePaymentStore =defineStore("payment",{
           },
           final_price: 0
         },
-        invoiceErrors: {}, // 用來記錄發票錯誤訊息
-        hasAttemptedSubmit: false,//已嘗試送出訂單 驗證發票的手機格式
         sameAsUserInfo: false, //同訂購人請打勾 勾選狀態，預設為 false
-        citySelectorError:'',//請完整選擇縣市、區域與郵遞區號
+        //預設資料
         addressData: {
           台北市: {
             中正區: '100',
@@ -142,25 +137,20 @@ export const usePaymentStore =defineStore("payment",{
             const totalAmount = cartStore.totalAmount;
             return totalAmount >= this.selectedMethod.freeShippingThreshold ? 0 : this.selectedMethod.freeShippingThreshold - totalAmount;
         },
-        //訂購人 全部的地址資訊(放到submitOrder)
+        //訂購人 全部的地址資訊
         getUserFullAddress() {
-          const county = document.querySelector('.tw-city-selector-buyer .county')?.value || '';
-          const district = document.querySelector('.tw-city-selector-buyer .district')?.value || '';
-          const zipcode = document.querySelector('.tw-city-selector-buyer .zipcode')?.value || '';
-          const street = this.orderInfo.user_info.address || '';
-          return `${zipcode} ${county} ${district} ${street}`;
+          const user = this.orderInfo.user_info;
+          return `${user.zipcode} ${user.county} ${user.district} ${user.address}`;
         },
-        //收件人 全部的地址資訊(放到submitOrder)
+        //收件人 全部的地址資訊
         getShippingFullAddress() {
-          const county = document.querySelector('.tw-city-selector-shipping .county')?.value || '';
-          const district = document.querySelector('.tw-city-selector-shipping .district')?.value || '';
-          const zipcode = document.querySelector('.tw-city-selector-shipping .zipcode')?.value || '';
-          const street = this.orderInfo.shipping_info.address || '';
-          return `${zipcode} ${county} ${district} ${street}`;
+          const shipping = this.orderInfo.shipping_info;
+          return `${shipping.zipcode} ${shipping.county} ${shipping.district} ${shipping.address}`;
         },
    
     },
     actions:{
+      //
         async getOrder(){
           const authStore = useAuthStore();
           const userId = authStore.id;
@@ -179,225 +169,15 @@ export const usePaymentStore =defineStore("payment",{
         setSelectedPayment(payment) {
             this.selectedPayment = payment;
         },
-        //支付$按鈕
-        // async submitOrder() {
-        //   const authStore = useAuthStore()
-        //   const token = authStore.token;
-
-        //   const cartStore = useCartStore()
-
-        //   const userId = authStore.id;
-        //   // 檢查必填欄位
-        //   if (!this.orderInfo.user_info.name || !this.orderInfo.user_info.email || !this.orderInfo.shipping_info.name || !this.orderInfo.shipping_info.address) {
-        //     alert("請填寫所有必要欄位！");
-        //     return;
-        //   }
-
-        //   if (!this.validateInvoiceInfo()) {
-        //     alert("請修正發票資訊後再提交");
-        //     return;
-        //   }
-        //   //訂單時間
-        //   const now = new Date();
-        //   const createdAt = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ` +
-        //           `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
-
-        //   // 構建訂單資料
-        //   const orderData = {
-        //     created_at: createdAt,
-        //     userId: userId, // 這裡需要取得用戶的ID
-        //     // cart_id: this.cartStore.cartId, // 當前購物車的ID
-        //     // cartDataId: cartStore.cartItems.id, // 當前購物車的ID(沒影出現)
-
-        //     status: "pending",//目前訂單狀態 ending / confirmed / shipped / delivered / cancelled
-        //     payment_status: "unpaid",// 先設為未付款 或 'paid' 付款狀態(是/否) 
-        //     // shipping_status: "not_shipped", //運輸狀態
-        //     final_price: cartStore.finalTotal, // 最終價格（考慮折扣等）
-
-        //     //訂購人資料
-        //     user_info: {
-        //       name: this.orderInfo.user_info.name,
-        //       email: this.orderInfo.user_info.email,
-        //       tel: this.orderInfo.user_info.tel,
-        //       address: this.getUserFullAddress 
-        //     },
-        //     // 收件人資料
-        //     shipping_info: {
-        //       name:this.orderInfo.shipping_info.name,
-        //       email:this.orderInfo.shipping_info.email,
-        //       tel: this.orderInfo.shipping_info.tel,
-        //       address:this.getShippingFullAddress,
-        //       // method: this.orderInfo.shipping_info.method, // 配送方式
-        //       comment: this.orderInfo.shipping_info.comment 
-        //     },
-        //     //付款方式
-        //     payment_info: {
-        //       method: this.selectedMethod.name, // 此為'linepay' / 'credit'
-        //       transaction_id: null, // 付款會立即完成 貨到付款可以為null
-        //       paid_at: null // 付款會立即完成 付款時間
-        //     },
-        //     //發票資訊
-        //     invoice_info: {
-        //       type: this.orderInfo.invoice_info.type,
-        //       phoneCarrier: this.orderInfo.invoice_info.phoneCarrier,     // 若 type 是 "手機條碼"
-        //       taxId: this.orderInfo.invoice_info.taxId,            // 若 type 是 "統一編號"
-        //       donationCode: this.orderInfo.invoice_info.donationCode,      // 若 type 是 "捐贈發票"
-        //       donationName: this.orderInfo.invoice_info.donationName,
-        //     },
-        //     items:[
-        //       {
-        //         variant_Id:0
-        //       },
-        //     ]
-            
-        //   };
-        //   // 呼叫API創建訂單
-        //   try {
-        //     // this.isLoading = true;
-        //     const { data } = await axios.post("https://204ed3432b06d7af.mokky.dev/orders", orderData, {
-        //       headers: {
-        //         // Authorization: `Bearer ${this.authStore.token}`,
-        //         Authorization: `Bearer ${token}`,
-
-        //       },
-        //     });
-        //     // this.isLoading = false;
-        //     console.log("✅ 訂單成功建立", data);
-            
-        //     // 如果付款方式為線上支付才模擬付款
-        //     if (["linepay", "credit"].includes(this.selectedMethod)) {
-        //       await this.goToPayment(data.id);
-        //     }
-        //     // router.push("/cart/orderdone"); // ✅ 可以直接用
-
-           
-        //   } catch (err) {
-        //     // this.isLoading = false;
-        //     console.error("❌ 建立訂單失敗", err);
-        //     alert("訂單建立失敗，請稍後再試");
-        //   }
-        // },
+        
         // 將購物車轉換為訂單 
-        // convertCartToOrder(cartsData, formData, userId) {
-        //   const selectedItems = cartsData.items.filter(item => item.selected);
-        //   const orderItems = selectedItems.map(item => {
-        //     const variant = item.product.variants.find(v => v.id === item.variant_Id);
-        //     return {
-        //       product_id: item.product.id,
-        //       variant_id: item.variant_Id,
-        //       name: item.product.name,
-        //       size: variant?.size || '',
-        //       color: variant?.color || '',
-        //       quantity: item.quantity,
-        //       price: item.price,
-        //       subtotal: item.subTotal,
-        //       image: item.product.colors[0]?.imageurl || ''
-        //     };
-        //   });
-        
-        //   const now = new Date();
-        //   const createdAt = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ` +
-        //                     `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
-        
-        //   return {
-        //     created_at: createdAt,
-        //     userId,
-        //     status: "pending",
-        //     payment_status: "unpaid",
-        //     final_price: cartsData.final_total,
-        
-        //     user_info: {
-        //       name: formData.user_info.name,
-        //       email: formData.user_info.email,
-        //       tel: formData.user_info.tel,
-        //       address: formData.getUserFullAddress
-        //     },
-        //     shipping_info: {
-        //       name: formData.shipping_info.name,
-        //       email: formData.shipping_info.email,
-        //       tel: formData.shipping_info.tel,
-        //       address: formData.getShippingFullAddress,
-        //       comment: formData.shipping_info.comment
-        //     },
-        //     payment_info: {
-        //       method: formData.selectedMethod.name,
-        //       transaction_id: null,
-        //       paid_at: null
-        //     },
-        //     invoice_info: {
-        //       type: formData.invoice_info.type,
-        //       phoneCarrier: formData.invoice_info.phoneCarrier,
-        //       taxId: formData.invoice_info.taxId,
-        //       donationCode: formData.invoice_info.donationCode,
-        //       donationName: formData.invoice_info.donationName,
-        //     },
-        //     items: orderItems
-        //   };
-        // },
-        // convertCartToOrder(cartsData, userId) {
-        //   const selectedItems = cartsData.items.filter(item => item.selected);
-        //   const orderItems = selectedItems.map(item => {
-        //     const variant = item.product.variants.find(v => v.id === item.variant_Id);
-        //     return {
-        //       product_id: item.product.id,
-        //       variant_id: item.variant_Id,
-        //       name: item.product.name,
-        //       size: variant?.size || '',
-        //       color: variant?.color || '',
-        //       quantity: item.quantity,
-        //       price: item.price,
-        //       subtotal: item.subTotal,
-        //       image: item.product.colors[0]?.imageurl || ''
-        //     };
-        //   });
-        
-        //   const now = new Date();
-        //   const createdAt = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ` +
-        //                     `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
-        
-        //   return {
-        //     created_at: createdAt,
-        //     userId,
-        //     status: "pending",
-        //     payment_status: "unpaid",
-        //     final_price: cartsData.final_total,
-        
-        //     user_info: {
-        //       name: this.orderInfo.user_info.name,
-        //       email: this.orderInfo.user_info.email,
-        //       tel: this.orderInfo.user_info.tel,
-        //       address: this.getUserFullAddress
-        //     },
-        //     shipping_info: {
-        //       name: this.orderInfo.shipping_info.name,
-        //       email: this.orderInfo.shipping_info.email,
-        //       tel: this.orderInfo.shipping_info.tel,
-        //       address: this.getShippingFullAddress,
-        //       comment: this.orderInfo.shipping_info.comment
-        //     },
-        //     payment_info: {
-        //       method: this.selectedMethod.name,
-        //       transaction_id: null,
-        //       paid_at: null
-        //     },
-        //     invoice_info: {
-        //       type: this.orderInfo.invoice_info.type,
-        //       phoneCarrier: this.orderInfo.invoice_info.phoneCarrier,
-        //       taxId: this.orderInfo.invoice_info.taxId,
-        //       donationCode: this.orderInfo.invoice_info.donationCode,
-        //       donationName: this.orderInfo.invoice_info.donationName
-        //     },
-        //     items: orderItems
-        //   };
-        // },
         convertCartToOrder() {
           const authStore = useAuthStore();
           const cartStore = useCartStore();
          
-        
           const selectedItems = cartStore.cartItems.items.filter(item => item.selected);
           const orderItems = selectedItems.map(item => {
-            const variant = item.product.variants.find(v => v.id === item.variant_Id);
+          const variant = item.product.variants.find(v => v.id === item.variant_Id);
             return {
               product_id: item.product.id,
               variant_id: item.variant_Id,
@@ -429,13 +209,13 @@ export const usePaymentStore =defineStore("payment",{
               name: this.orderInfo.user_info.name,
               email: this.orderInfo.user_info.email,
               tel: this.orderInfo.user_info.tel,
-              address: this.getUserFullAddress
+              address: this.getUserFullAddress,
             },
             shipping_info: {
               name: this.orderInfo.shipping_info.name,
               email: this.orderInfo.shipping_info.email,
               tel: this.orderInfo.shipping_info.tel,
-              address: this.getShippingFullAddress,
+              address: this.getShippingFullAddress, 
               comment: this.orderInfo.shipping_info.comment
             },
             payment_info: {
@@ -477,25 +257,13 @@ export const usePaymentStore =defineStore("payment",{
 
           await cartStore.getCartData();// 🛒 先載入購物車資料
 
-          // 補上後端完整地址格式（郵遞區號 + 縣市 + 區 + 原地址）
-          const shipping = this.orderInfo.shipping_info
-          const user = this.orderInfo.user_info
-          shipping.address = `${shipping.zipcode} ${shipping.county} ${shipping.district} ${shipping.address}`
-          user.address = `${user.zipcode} ${user.county} ${user.district} ${user.address}`
-
           // console.log('✅ 載入後的 cartData:', cartStore.cartData);
-          
-        
-        
-          this.hasAttemptedSubmit = true;//已嘗試送出訂單 true判斷驗證
-         
-        
 
           const userCart = cartStore.cartItems;
           console.log("✅ 準備找購物車", userCart);
           console.log("🧾 userId 是", userId);
 
-            console.log('🛒 找到的購物車是',userCart)
+          console.log('🛒 找到的購物車是',userCart)
 
           const orderData = this.convertCartToOrder();//將購物車變成order訂單
 
@@ -508,8 +276,8 @@ export const usePaymentStore =defineStore("payment",{
             console.log("✅ 訂單成功建立", data);
 
             await cartStore.clearSelectedItems();//刪除在/cartsdata結帳的商品
+            this.orderInfo = this.getDefaultOrderInfo(); // ✅ 清空表單資料
 
-           
             // 根據付款方式跳轉對應頁面
     
           if (this.selectedPayment === "linepay") {
@@ -522,51 +290,11 @@ export const usePaymentStore =defineStore("payment",{
     
           return true;  
         
-            // if (["linepay", "credit"].includes(this.selectedMethod)) {
-            //   await this.goToPayment(data.id);
-            // }
-        
           } catch (err) {
             console.error("❌ 建立訂單失敗", err);
             alert("訂單建立失敗，請稍後再試");
           }
         },
-        
-        
-       
-        
-        
-      
-        //模擬付款中（LINE Pay / 信用卡）。如果付款方式為 linepay 或 credit 才會呼叫
-        // async goToPayment(orderId) {
-        //   const authStore = useAuthStore();
-    
-        //   console.log("🧾 模擬付款中（LINE Pay / 信用卡）...");
-        //   const fakeTransactionId = "TXN_" + Date.now();
-        //   const paidAt = new Date().toISOString();
-    
-        //   const patchData = {
-        //     payment_status: "paid",
-        //     payment_info: {
-        //       method: this.selectedMethod,
-        //       transaction_id: fakeTransactionId,
-        //       paid_at: paidAt
-        //     }
-        //   };
-    
-        //   try {
-        //     await axios.patch(`https://204ed3432b06d7af.mokky.dev/orders/${orderId}`, patchData, {
-        //       headers: {
-        //         Authorization: `Bearer ${authStore.token}`
-        //       }
-        //     });
-    
-        //     console.log("✅ 付款成功，訂單已更新為已付款");
-    
-        //   } catch (error) {
-        //     console.error("❌ 更新付款狀態失敗：", error);
-        //   }
-        // },
         
         //複製訂購人資料
         async copyUserInfo() {
@@ -595,8 +323,9 @@ export const usePaymentStore =defineStore("payment",{
             const zip = this.addressData[userInfo.county]?.[userInfo.district] || ''
             shippingInfo.zipcode = zip
            
-          } else {
-            // 清空收件人資料
+          } 
+          else {
+            // 切換為不用複製訂購人資料(清空收件人資料)
             shippingInfo.name = '';
             shippingInfo.email = '';
             shippingInfo.tel = '';
@@ -608,23 +337,16 @@ export const usePaymentStore =defineStore("payment",{
           }
           console.log('✅ copyUserInfo 被呼叫了！')
         },
-       
-        
-        //
-        // selectInvoiceType(type) {
-        //   this.orderInfo.invoice_info.type = type;
-        //   this.invoiceErrors = {}; // 清空錯誤訊息
-        // }
+      
         //選擇發票button
         selectInvoiceType(type) {
           this.orderInfo.invoice_info.type = type;
-      
-          // 清空先前資料
+        
+          // 清空先前資料 (只會有一筆資料)
           this.orderInfo.invoice_info.phoneCarrier = '';
           this.orderInfo.invoice_info.taxId = '';
           this.orderInfo.invoice_info.donationCode = '';
           this.orderInfo.invoice_info.donationName = '';
-          this.invoiceErrors = {}; // 清空錯誤訊息
       
           // 自動填入捐贈碼與單位名稱
           if (type === '捐贈發票') {
@@ -639,6 +361,47 @@ export const usePaymentStore =defineStore("payment",{
           } else {
             return "黑貓宅配 - 常溫";
           }
+        },
+        //orderInfo表單初始狀態(無任何資料，清空資料用)
+        getDefaultOrderInfo() {
+          return {
+            user_info: {
+              name: '',
+              email: '',
+              tel: '',
+              county: '',
+              district: '',
+              zipcode: '',
+              address: '',
+            },
+            shipping_info: {
+              name: '',
+              email: '',
+              tel: '',
+              county: '',
+              district: '',
+              address: '',
+              zipcode: '',
+              comment: ''
+            },
+            payment_info: {
+              method: '',
+              transaction_id: '',
+              paid_at: null
+            },
+            delivery_info: {
+              method: "",
+              store: null
+            },
+            invoice_info: {
+              type: "",
+              phoneCarrier: "",
+              taxId: "",
+              donationCode: "",
+              donationName: ""
+            },
+            final_price: 0
+          };
         }, 
     },
 }) 

@@ -23,23 +23,12 @@ export async function login(credentials) {
       const response = await axios.post(`${API_URL}/auth`, credentials);
       const { token, data:user } = response.data;
       console.log('會員登入回應:',response.data)  
-      // 設置用戶的 Token 和 ID
-      // authStore.setToken(token);// 保存 token
-      // authStore.setUserId(user.id);// 保存 userId
-
-      // 確保 token 和 userId 設置後調用 getWishlist
-    // if (!authStore.token || !authStore.userId) {
-    //     throw new Error('Token 或 UserId 設置失敗');
-    //   }
+      
       // **改用 `type` 判斷會員**
       if(user.type === 'member'){
         authStore.setAuthData(token, user);
         console.log(`會員登入成功，ID: ${user.id}`);
-        // 確保 token 和 userId 設置成功後再執行其他操作
-        // if (!authStore.token || !authStore.user) {
-        //   throw new Error('Token 或 UserId 設置失敗');
-        // }
-
+        
         // 後台會員的last_login:取得當前台灣時間並格式化為 YYYY/MM/DD HH:mm
         const now = new Date().toLocaleString('zh-TW', { 
           timeZone: 'Asia/Taipei', 
@@ -55,13 +44,12 @@ export async function login(credentials) {
        
         await axios.patch(`${API_URL}/users/${user.id}`, { last_login: now });
          // **更新 authStore，讓畫面立即顯示最新時間**
-        //  authStore.setAuthData(token, { ...user, last_login: now });
         console.log('會員 last_login 已更新:', now);
 
          // 登入後同步獲取追蹤清單
         await wishlistStore.getWishlist();
-        // 初始化購物車
-        await cartStore.getCartData({ initialize: true });
+        // 登入後獲取購物車
+        await cartStore.getCartData();
 
         console.log('會員登入成功，購物車與追蹤清單已同步');
         return response.data; // 返回數據供組件使用
@@ -90,21 +78,7 @@ export async function adminLogin(credentials){
     } else {
       throw new Error('非管理員帳號，請使用前台登入');
     }
-    // if (admin.type === 'admin' || admin.role === 'superadmin') {
-    //   adminAuthStore.setAuthData(token, user);
-    //   console.log(`管理員登入成功，ID: ${user.id}`);
-    //   return response.data;
-    // } else {
-    //   throw new Error('非管理員帳號，請使用前台登入');
-    // }
-
-    // if(user.role === 'admin' || user.role === 'superadmin'){
-    //   adminAuthStore.setAuthData(token, user);
-    //   console.log('管理員登入成功');
-    //   return response.data;
-    // }else{
-    //   throw new Error('非管理員帳號，請使用前台登入');
-    // }
+ 
   }catch(error){
     console.error('管理員登入失敗:', error);
     throw new Error('登入失敗，請檢查帳號或密碼');
@@ -112,7 +86,7 @@ export async function adminLogin(credentials){
 }
 
 // 登出（通用）
-export function logout() {
+export async function logout() {
     const authStore = useAuthStore();
     const adminAuthStore = useAdminAuthStore();
     const wishlistStore = useWishlistStore();
@@ -126,12 +100,9 @@ export function logout() {
       
        // 清空購物車(isInCart狀態被清除)
        cartStore.cartItems = [];
-       cartStore.backendCart = { items: [] };
-      //  cartStore.syncCartToLocalStorage(); // 同步到本地儲存
    
       console.log('登出成功，所有狀態已清空');
 
-   
 }
 
 // /**
@@ -139,13 +110,12 @@ export function logout() {
 //  * @param {Object} userDetails - 使用者的註冊資料
 //  * @returns {Promise<Object>} 返回註冊成功的回應數據
 //  */
-//會員註冊
+//會員註冊 
 export async function register(userDetails) {
     try {
         // 發送 POST 請求進行註冊
         const { data } = await axios.post('https://204ed3432b06d7af.mokky.dev/register', userDetails);
 
-        // console.log('註冊成功，回應數據:', data);
         return data; // 返回註冊成功的數據
     } catch (error) {
         console.error('註冊失敗:', error);
@@ -154,5 +124,6 @@ export async function register(userDetails) {
         throw new Error(error.response?.data?.message || '註冊失敗，請檢查您的資料是否正確！');
     }
 }
+
 
 

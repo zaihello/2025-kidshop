@@ -12,15 +12,9 @@ export default{
       showPassword: false,
     }
   },
-  // computed:{
-  //   adminAuthStore(){
-  //     return useAdminAuthStore() 
-  //   },  
-  // },
   methods:{
     async loginUser() {
       try {
-        // await this.adminAuthStore.login(this.form);
         const data = await adminLogin(this.form);
         alert('登入成功');
         this.$router.push('/admin'); // 登入後導向管理頁面
@@ -66,7 +60,6 @@ export default{
             </label>
             <div class="relative">
                 <!-- 切換密碼可見性使用 showPassword -->
-                 <!--   -->
               <input
                 v-model="form.password"
                :type="showPassword ? 'text' : 'password'"
@@ -92,8 +85,6 @@ export default{
                </button>
             </div>
           </div>
-  
-          
   
           <!-- Submit Button -->
           <button

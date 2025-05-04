@@ -17,6 +17,7 @@ export default {
     await this.getOrders()
   },
   methods: {
+    //取得使用者訂單(將訂單依照 created_at 做倒序排序（新訂單在前）)
     async getOrders() {
       const authStore = useAuthStore()
       const userId = authStore.id
@@ -28,7 +29,8 @@ export default {
             Authorization: `Bearer ${token}`,
           },
         })
-        this.orders = data
+       // 將訂單依照 created_at 做倒序排序（新訂單在前）
+        this.orders = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       } catch (error) {
         console.error('取得歷史訂單失敗', error)
       }
@@ -37,19 +39,15 @@ export default {
       const date = new Date(datetime)
       return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
     },
-    // getOrderStatus(status) {
-    //   const map = {
-    //     pending: '處理中',
-    //     confirmed: '已確認',
-    //     shipped: '已出貨',
-    //     delivered: '已送達',
-    //     cancelled: '已取消',
-    //   }
-    //   return map[status] || '未知狀態'
-    // },
-    // getPaymentStatus(status) {
-    //   return status === 'paid' ? '已付款' : '未付款'
-    // },
+    //格式化金額(3,000)
+    formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD', // 可以更改為其他貨幣，如 'TWD'顯示 NT$或 'EUR'
+        minimumFractionDigits: 0,//顯示為 $50.00
+        maximumFractionDigits: 2,
+      }).format(value);
+    },
   },
 }
 </script>
@@ -73,15 +71,13 @@ export default {
               <p class="text-sm text-gray-500">建立日期：{{ formatDate(order.created_at) }}</p>
             </div>
             <div class="text-right">
-              <!-- {{ getOrderStatus(order.status) }} -->
               <p class="text-sm">訂單狀態：<span class="text-blue-600">{{ order.status }}</span></p>
-              <p class="text-sm">金額：NT$ {{ order.final_price }}</p>
+              <p class="text-sm">金額： {{ formatCurrency(order.final_price) }}</p>
             </div>
           </div>
   
           <div class="flex justify-between items-center mt-2">
             <div>
-              <!-- {{ getPaymentStatus(order.payment_status) }} -->
               <p class="text-sm">付款狀態：<span class="text-red-500">{{ order.payment_info.status }}</span></p>
               <p class="text-sm">收件人：{{ order.shipping_info.name }}</p>
             </div>
@@ -93,10 +89,4 @@ export default {
       </div>
     </div>
   </template>
-  
-
-  
-  <style scoped>
-  /* 可以根據需求加動畫或 icon */
-  </style>
-  
+ 

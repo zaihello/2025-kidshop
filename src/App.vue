@@ -1,11 +1,7 @@
-<script>
-
-
-</script>
 
 <template>
   
-  <div >
+  <div>
     <!-- 版型寬度 -->
     <!-- <div class="w-full 2xl:w-3/4 2xl:m-auto">
       <h2>KID_4</h2>
@@ -14,6 +10,12 @@
 
     <router-view/>
   </div>
-  
-  
+
 </template>
+
+<!-- <style>
+html, body {
+  height: 100% !important;
+  overflow-y: auto !important;
+}
+</style> -->

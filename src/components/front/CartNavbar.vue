@@ -11,26 +11,29 @@ export default{
         }
     },
     computed:{
-        //
+        //目前在步驟幾(購物清單、填寫資料、訂購完成)
         currentStep() {
             const current = this.steps.find(step => this.$route.path.includes(step.path))
             return current ? current.id : 1
         },
     },
     methods:{
+        //如果已經訂購完成（isSubmitted === true），就不能回到「步驟一或步驟二」,只能留在「步驟三」訂購完成頁。
         goToStep(step) {
             if (this.isSubmitted && step.id !== 3) return
             this.$router.push(step.path)
         }
     },
     watch: {
-    $route(to) {
-      this.isSubmitted = to.path === '/cart/orderdone'
+        //如果切換到「訂購完成」頁，就把 isSubmitted 設為 true(用來禁止返回前兩步)，否則為 false。
+        $route(to) {
+            this.isSubmitted = to.path === '/cart/orderdone'
+        }
+    },
+    mounted() {
+        //一開始載入（進入頁面）時就檢查：是不是 /cart/orderdone？
+        this.isSubmitted = this.$route.path === '/cart/orderdone'
     }
-  },
-  mounted() {
-    this.isSubmitted = this.$route.path === '/cart/orderdone'
-  }
 }
 </script>
 <template>

@@ -7,6 +7,18 @@ export default {
       blogs: [],
     };
   },
+  computed:{
+    // 先把所有 blog 整平 成一個陣列
+    allBlogs() {
+      // 假設 blogs 是原本的分類資料 [{ category, datas: [...] }]
+      return this.blogs.flatMap(category =>
+        category.datas.map(blog => ({
+          ...blog,
+          category: category.category
+        }))
+      );
+    }
+  },
   methods: {
     async getBloglist() {
       try {
@@ -28,14 +40,15 @@ export default {
 };
 </script>
 <template>
-<div class="w-full 2xl:w-3/4 2xl:m-auto">
+<div class="2xl:w-3/4 2xl:m-auto py-20">
     <!-- flex justify-center items-center min-h-screen-->
-    <div class=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-8">
         <!-- 第一層資料迭代 -->
-        <div v-for="category in blogs" :key="category.id" >
+        <!-- <div v-for="category in blogs" :key="category.id" > -->
             <!-- class="flex justify-center items-center min-h-screen" -->
             <!-- 第二層資料迭代 -->
-            <div v-for="blog in category.datas" :key="blog.id" class="mb-9 ">
+
+            <div v-for="blog in allBlogs" :key="blog.id" class="mb-9 ">
                 <!-- <div class="max-w-[720px] mx-auto text-center"> -->
                     <!-- max-w-[370px] rounded-xl-->
                     <div class="group/animation relative flex w-full flex-col rounded-b-xl  bg-white bg-clip-border text-gray-700 shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out ">
@@ -51,7 +64,7 @@ export default {
                             </div> 
                             <a href="#" 
                                 class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-blue-700 text-white text-xs font-bold text-center px-2 py-1 rounded flex items-center justify-center h-[40px] z-10">
-                                {{ category.category }}
+                                {{ blog.category }}
                             </a> 
                             <!-- 類別標籤 (固定在底部，水平 & 垂直置中) -->
     
@@ -84,8 +97,9 @@ export default {
                         </div>
          
                         <div class="px-6 pt-6">
+                            <!-- 標題 -->
                             <h5 class="block font-sans text-xl text-center antialiased font-medium leading-snug tracking-normal text-blue-gray-900 my-3">
-                                {{ truncateText(blog.title,50) }}
+                                {{ truncateText(blog.title,10) }}
                             </h5>
                             <div class="flex flex-col items-center text-xs my-1">
                                 <div class="flex flex-row items-center gap-3">
@@ -125,7 +139,7 @@ export default {
                         
                                 </div>           
                             </div>
-                        
+                            <!-- 介紹 -->
                             <p class="py-2 block font-sans text-base antialiased font-light leading-relaxed text-gray-700 ">
                                 {{ truncateText(blog.description, 100) }}
                             </p>
@@ -141,7 +155,7 @@ export default {
                     </div>
                 <!-- </div> -->
             </div>
-        </div>
+        <!-- </div> -->
     </div>
 </div>
 </template>

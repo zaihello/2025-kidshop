@@ -62,17 +62,10 @@
     
     <script>
     import { useProductStore } from '../../stores/productStore'
-    // import { useAdminProductStore } from '../../stores/adminProductStore'
-      // Import Swiper Vue.js components
       import { Swiper, SwiperSlide } from 'swiper/vue';
-    
       // Import Swiper styles
       import 'swiper/css';
-    
       import 'swiper/css/navigation';
-    
-    //   import './style.css';  可刪除
-    
       // import required modules
       import { Navigation } from 'swiper/modules';
     
@@ -109,6 +102,7 @@
                 image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-leggings-3-1.jpg',
               },
             ],
+            modules: [Navigation],
           }
         },
         methods:{
@@ -125,23 +119,15 @@
           },
         }, 
         computed:{
-          // adminProductStore(){
-          //   return useAdminProductStore()
-          // },
-          // 計算每個類別的商品數量(放在computed數據自動重新計算)
+          productStore(){
+            return useProductStore()
+          },
+            // 計算前台每個類別的商品數量(以啟用商品)(放在computed數據自動重新計算)
           categoryCounts(){
             return this.productStore.categoryCounts(this.categoryItems);
           },
         },
-        //323
-        setup() {
-          // 引用 productStore
-          const productStore = useProductStore();
-          return {
-            modules: [Navigation],
-            productStore, // 將 Store 引入模板使用 
-          };
-        },
+      
       };
     </script>
     

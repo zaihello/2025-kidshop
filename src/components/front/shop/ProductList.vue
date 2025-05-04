@@ -9,20 +9,23 @@ import CategorySwiper from '../../swiper/CategorySwiper.vue'
 import Breadcrumb from './Breadcrumb.vue'
 import Card from '../Card.vue'
 import Pagination from './Pagination.vue'
+import AddcartModal from '../../../components/AddcartModal.vue'
 
 export default {
-  components: {Card,Pagination,CategorySwiper,Breadcrumb},
+  components: {Card,Pagination,CategorySwiper,Breadcrumb,AddcartModal},
   data(){
     return{
       isMenuOpen: false, // 控制導航列開關
+      isModalOpen: false,//加入購物車的視窗開關追蹤
+      selectedProduct: null,//加入購物車的視窗 選擇的產品
     }
   },
   methods:{
-    //切換漢堡選單開關 //本組件
+    //切換漢堡選單開關
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen;
     },
-    //關閉漢堡選單開關 //本組件  
+    //關閉漢堡選單開關
     closeMenu() {
       this.isMenuOpen = false;
     },
@@ -31,23 +34,17 @@ export default {
       // 更新路由參數和 store
       this.$router.push({
         name:'Shop',
-        // path: this.$route.path,
         query: { ...this.$route.query, page: pageNumber },
       });
       this.productStore.setPage(pageNumber); // 通知 store
-      // this.updatePrices(); // 在分頁切換時更新價格 add
     },
-   
-  
-
-    // 1.更新分類並導航
+    // 1.更新分類並導航 https://example.com/shop?category=Clothing&page=1
     updateCategoryAndNavigate(category) {
-      // 將分類參數設置為小寫
-      const categoryParam = category.toLowerCase();
+      
+      const categoryParam = category
 
       // 更新路由參數
       this.$router.push({
-        // path: this.$route.path,
         name: 'Shop',
         query: { ...this.$route.query, category: categoryParam, page: 1 },
       });
@@ -55,35 +52,11 @@ export default {
       // 更新 Store 中的分類狀態
      this.productStore.updateCategory(category);
     },
-   
-     // 2.用於導航到特定分類
-    navigateToCategory(category) {
-      this.updateCategoryAndNavigate(category);
-    },
-    // 3.回到 "全部商品"
+    // 2.設定 "全部商品" 分類為All
     showAllProducts() {
       this.updateCategoryAndNavigate('All');
     },
-    //設置麵包屑數據 
-    setupBreadcrumb() {
-      this.breadcrumbItems = [
-        { label: '全部商品', action: this.showAllProducts },
-        this.currentCategory !== '全部商品' ? { label: this.currentCategoryLabel } : null, // 如果當前類別不是「全部商品」，  顯示第二項
-      ].filter(Boolean); // 過濾掉 null 值
-    },
-    // 先登入，才能切換追蹤不追蹤的圖片  添加或移除商品到追踪清单 原本
-    // toggleWishlistHandler(product) {
-    //   // 判斷是否已登錄
-    //   if (!this.authStore.isLoggedIn) {
-    //     alert('請先登入以操作追蹤清單');
-    //     this.$router.push('/login'); // 導向登錄頁
-    //     return;
-    //   }
-
-    //   // 調用 `wishlistStore` 中的 `toggleWishlist` 方法
-    //   this.wishlistStore.toggleWishlist(product);
-    // },
-    //add
+    // 商品列表先登入，才能切換追蹤不追蹤的圖片  添加或移除商品到追踪清单
     handleWishlistClick(product) {
       // 判斷是否已登錄
       if (!this.authStore.isLoggedIn) {
@@ -94,44 +67,25 @@ export default {
       // 調用 `wishlistStore` 中的 `toggleWishlist` 方法
       this.wishlistStore.toggleWishlist(product);
     },
-    
-    //商品列表的購物車按鈕
-    toggleCart(product) {
+   
+      // 商品列表的購物車按鈕
+    handleCartListClick(product) {
       // 判斷是否已登錄
       if (!this.authStore.isLoggedIn) {
         alert('請先登入以加入購物車');
         this.$router.push('/login'); // 導向登錄頁
         return;
       }
-      //this.cartStore.toggleCart(product, this.authStore.userId, this.authStore.token);
-      // this.cartStore.toggleCart(product, this.authStore.id, this.authStore.token);
-      this.cartStore.toggleCart(product)
-      console.log('User ID:', this.authStore.id);
-      console.log('Token:', this.authStore.token);
-
-      console.log('Toggle Cart called for product:', product);//有
+      this.selectedProduct = product;// 設定商品
+      this.isModalOpen = true;// 開啟 Modal（但其實只靠 selectedProduct 就夠了）
+      
     },
-    isInWishlist(productId) {
-      return this.wishlistStore.isInWishlist(productId);
-    },
-   
-
-    
+    //關閉加入購物車視窗(商品列表頁)
+    closeModal() {
+      this.isModalOpen = false;
+      this.selectedProduct = null;
+    },  
   },
-    // 加載產品並批量更新折購後的價格儲存進api裡
-    // async updatePrices() {
-    //   try {
-    //       await this.productStore.getProducts(); // 加載所有產品
-    //       // await this.productStore.updateAllProductPrices(); // 更新所有價格
-    //       console.log('所有價格更新完成！');
-    //   } catch (error) {
-    //       console.error('更新價格過程中出現錯誤:', error);
-    //   } finally {
-    //   }
-    // },
-    // updateAllProductPrices(){
-    //   return this.productStore.updateAllProductPrices()
-    // },
   computed: {
     // 動態獲取 store 實例
     productStore() {
@@ -149,84 +103,31 @@ export default {
     adminProductStore(){
       return useAdminProductStore()
     },
-
-    // 滾動 //本組件
+    // 控制側邊欄的開合動畫位移 translate-x
     menuClass() {
       return this.isMenuOpen ? "translate-x-0" : "-translate-x-full";
-    },
-    // 當前分頁的商品清單
-    paginatedProducts() {
-      
-      return this.productStore.paginatedProducts;
-    },
-   
-    // 過濾符合篩選條件的商品(好像可刪)(2/20)
-    // filteredProducts(){
-    //   return this.productStore.filteredProducts;
-    // },
-    // 計算顏色數量
-    // colorCounts(){
-    //   return this.productStore.colorCounts;
-    // },
-    // 計算尺寸數量
-    sizeCounts(){
-      return this.productStore.sizeCounts;
-    },
-    //state的filter物件
-    filter() {
-      return this.productStore.filter ;
     },
     //(麵包屑)
     currentCategory() {
       return this.productStore.filter?.category || '全部商品';
     },
-    // 當前分類標籤(麵包屑)
-    currentCategoryLabel() {
-      return this.currentCategory;
-    },
-    //計算麵包屑
+    //計算麵包屑(點選分類切換內容)
     breadcrumbItems() {
       return [
         { label: '全部商品', action: this.showAllProducts },
-        this.currentCategory !== '全部商品' ? { label: this.currentCategoryLabel } :  null,// 顯示當前分類
+        // label: this.currentCategoryLabel
+        this.currentCategory !== '全部商品' ? { label: this.currentCategory } :  null,// 顯示當前分類
       ].filter(Boolean);// 過濾掉 null 值
     },
-    // , 'markBackgroundColor'
-    // ...mapState(useProductStore, ['colorClass']),
-    //data的currentPage
+   
+    // 傳進Pagination
     currentPage() {
       return this.productStore.currentPage;
     },
-    //總頁數
+    //總頁數 傳進Pagination
     totalPages() {
       return this.productStore.totalPages;
     },
-   
-    // totalPages() {
-    //   return Math.ceil(this.adminProducts.length / this.itemsPerPage);
-    // },
-    //检查商品是否在追踪清单中  切換追蹤不追蹤的圖片
-    // isInWishlist() {
-    //   return (productId) => this.wishlistStore.isInWishlist(productId);
-    // },
-     // 計算某個商品是否在購物車中
-    // isInCart(){
-    //   return this.cartStore.isInCart
-    // },
-    //使用 computed 來監聽 adminProducts
-    //3/28可刪
-    adminProducts() {
-        return this.adminProductStore.adminProducts; 
-    },
-    // isInWishlist() {
-    //   return (productId) =>
-    //     this.wishlistStore.wishlist.some((item) => item.product_Id === productId);
-    // },
-    //  isInWishlist(productId) {
-    //   return this.wishlistStore.isInWishlist(productId);
-    // },
-
-
   },
   watch:{
     // 監聽 query 中的所有參數(類別、頁碼)變化
@@ -236,41 +137,24 @@ export default {
         this.productStore.syncRouteParams(this.$route);
       },
     },
-  
-    // 當分類改變時更新麵包屑
-    'productStore.filter.category': {
-      immediate: true,
-      handler() {
-        this.setupBreadcrumb();
-      },
-    },
 
   },
   mounted() {
     this.productStore.syncRouteParams(this.$route);//初始化狀態（類別與頁碼）
-    // this.productStore.getProducts();//載入商品324
-    this.setupBreadcrumb()//初始化麵包屑add
-    this.adminProductStore.getAdminProducts()
-    this.adminProductStore.getProducts()//324
-    // this.productStore.updateProductPrice(product)
-    // 在組件加載時初始化願望清單
-    // this.productStore.updateAllProductsPrice(this.products)
-    // this.updateAllProductPrices() // 加載產品並批量更新折購後的價格儲存進api裡
-    // this.updatePrices() // 加載產品並批量更新折購後的價格儲存進api裡
+    this.adminProductStore.getProducts()// 取得前台商品資料
   },
-  
- 
+
 }
 </script>
 
 <template>
-  <h1>ProductList.vue</h1>
+<div class="2xl:w-3/4 2xl:m-auto py-20">
     <!-- 頭:版型寬度 -->
-    <div class="w-full 2xl:w-3/4 2xl:m-auto">
+    <div class="pb-6">
       <CategorySwiper/>
     </div>
     <!-- 小螢幕Breadcrumb -->
-    <div class="lg:hidden">
+    <div class="lg:hidden px-2 pb-4">
         <!-- 麵包屑 -->
         <nav class="text-gray-600" aria-label="breadcrumb">
             <ol class="list-reset flex">
@@ -284,17 +168,9 @@ export default {
             <!-- 漢堡選單 -->
             <button 
                 @click="toggleMenu" 
-                class="text-gray-500 p-4 rounded-full "
+                class="text-gray-500 rounded-full "
                 >
-                <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor" 
-                    class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
+                <span class="material-icons">menu</span>
             </button> 
             
             <!-- 價格排序 -->
@@ -306,7 +182,7 @@ export default {
         </div>
     </div>
 
-    <div class="w-full 2xl:w-3/4 2xl:m-auto flex justify-between">
+    <div class="flex justify-between">
       <!-- 左側邊欄 -->
       <div>
         <!-- 小螢幕專用區 -->
@@ -346,7 +222,7 @@ export default {
                 <div class="relative mt-4">
                   <img class="absolute left-4 top-3" src="/search.svg">
                   <input 
-                    v-model="filter.searchText"
+                    v-model="productStore.filter.searchText"
                     class="border rounded-md py-2 pl-11 pr-4 outline-none focus:border-gray-400 w-full" 
                     type="text" 
                     placeholder="請輸入要搜尋的東西">
@@ -359,8 +235,8 @@ export default {
               <div class="mb-6">
                 <h4 class="text-md font-semibold text-gray-700">價格篩選</h4>
                 <div class="mt-4 flex flex-col gap-4">
-                  <input type="number" v-model.number="filter.price.min" placeholder="最低價" class="border rounded-md py-2 px-4 outline-none focus:border-gray-400 w-full">
-                  <input type="number" v-model.number="filter.price.max" placeholder="最高價" class="border rounded-md py-2 px-4 outline-none focus:border-gray-400 w-full">
+                  <input type="number" v-model.number="productStore.filter.price.min" placeholder="最低價" class="border rounded-md py-2 px-4 outline-none focus:border-gray-400 w-full">
+                  <input type="number" v-model.number="productStore.filter.price.max" placeholder="最高價" class="border rounded-md py-2 px-4 outline-none focus:border-gray-400 w-full">
                 </div>
               </div>
   
@@ -395,7 +271,7 @@ export default {
                     class="flex items-center justify-between group relative cursor-pointer"
                     @click="productStore.filter.color = color.name">
                     <div class="flex items-center">
-                      <!-- 顏色圓形 colorClass(color.name)原本-->
+                      <!-- 顏色圓形-->
                       <div 
                         :class="color.class"
                         class="w-5 h-5 rounded-full mr-3 relative">
@@ -468,7 +344,7 @@ export default {
                 <div class="relative mt-4">
                   <img class="absolute left-4 top-3" src="/search.svg">
                   <input 
-                    v-model="filter.searchText"
+                    v-model="productStore.filter.searchText"
                     class="border rounded-md py-2 pl-11 pr-4 outline-none focus:border-gray-400 w-full" 
                     type="text" 
                     placeholder="請輸入要搜尋的東西">
@@ -481,8 +357,8 @@ export default {
               <div class="mb-6">
                 <h4 class="text-md font-semibold text-gray-700">價格篩選</h4>
                 <div class="mt-4 flex flex-col gap-4">
-                  <input type="number"  v-model.number="filter.price.min" placeholder="最低價" class="border rounded-md py-2 px-4 outline-none focus:border-gray-400 w-full">
-                  <input type="number"  v-model.number="filter.price.max" placeholder="最高價" class="border rounded-md py-2 px-4 outline-none focus:border-gray-400 w-full">
+                  <input type="number"  v-model.number="productStore.filter.price.min" placeholder="最低價" class="border rounded-md py-2 px-4 outline-none focus:border-gray-400 w-full">
+                  <input type="number"  v-model.number="productStore.filter.price.max" placeholder="最高價" class="border rounded-md py-2 px-4 outline-none focus:border-gray-400 w-full">
                 </div>
               </div>
   
@@ -517,7 +393,6 @@ export default {
                     @click="productStore.filter.color = color.name">
                     <div class="flex items-center">
                       <!-- 顏色圓形 -->
-                       <!-- :class="colorClass(color.name)" -->
                       <div 
                         :class="color.class"
                         class="w-5 h-5 rounded-full mr-3 relative">
@@ -588,11 +463,6 @@ export default {
           <!-- 大螢幕Breadcrumb -->
           <nav class="text-gray-600" aria-label="breadcrumb">
             <ol class="list-reset flex">
-              <!-- <Breadcrumb
-                :homeLink="'/'"
-                :breadcrumbs="breadcrumbItems"
-                :currentCategory="currentCategory"
-              /> -->
               <Breadcrumb 
                 :homeLink="'/'"
                 :breadcrumbs="breadcrumbItems"
@@ -609,38 +479,26 @@ export default {
         </div>
   
         <!-- 商品列表 -->
-        <div  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-           <!-- @toggle-wishlist="toggleWishlistHandler" -->
-           <!-- 这里使用了箭头函数 (product) => toggleWishlistHandler(product)，目的是将子组件 @toggle-wishlist 的参数传递到父组件的 toggleWishlistHandler 方法中。 -->
-          <!-- @toggle-wishlist="(product) => toggleWishlistHandler(product)" -->
-           <!-- :toggle-wishlist-handler="toggleWishlistHandler" 原本 -->
-            <!-- product.id -->
-          <!-- cartStore.isInCart(product.id) 是一個函數執行的結果，返回布林值 -->
-          <!-- :key="product.id" -->
-          <!-- key="product-${product.id}" 可防止 Vue 誤判，確保正確銷毀舊組件並重新渲染新組件！ -->
-          <!-- 原版 -->
-          <!-- <Card
-            v-for="product in paginatedProducts"
-            :key="`product-${product.id}`"
-            :product="product"
-            :is-in-wishlist="isInWishlist(product.id)"
-           
-            :handle-wishlist-click="handleWishlistClick"
-          /> -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2 lg:px-0">
+         
           <Card
-            v-for="product in paginatedProducts"
-            :key="product.name"
+            v-for="(product,index) in productStore.paginatedProducts"
+            :key="product.id"
             :product="product"
-            :is-in-wishlist="isInWishlist(product.id)"
-           
+            :index="index"
             :handle-wishlist-click="handleWishlistClick"
+            @open-cart-modal="handleCartListClick"
           />
-          <!-- :is-in-cart="cartStore.isInCart(product.id)"
-          @togglecart="toggleCart" -->
-          <!--  :is-in-wishlist="product.isWishlist" -->
+
+          <!-- Modal -->
+          <AddcartModal
+            v-if="selectedProduct"
+            :product="selectedProduct"
+            @close="closeModal"
+          />
+
         </div> 
         <!-- Pagination Controls -->
-        <!-- @pageChange="setPage" -->
         <Pagination
           :currentPage="currentPage"
           :totalPages="totalPages"
@@ -649,5 +507,6 @@ export default {
         />
       </div>
     </div>
+</div>    
 </template>
   

@@ -1,29 +1,26 @@
 import { defineStore } from 'pinia'
-import { useProductStore } from '../stores/productStore'
+import { useAdminAuthStore } from '../stores/adminAuthStore'
 import axios from 'axios'
 
 export const useAdminProductStore = defineStore('adminProductStore',{
     state:()=>({
-        products:[], // 前台商品資料 323
+        products:[], // 前台商品資料 
         adminProducts: [], // 存放後台的產品數據
-        // itemsPerPage: 10, // 每頁商品數量
-        // currentPage: 1,
-        //資料要擴充修改這裡就好
+        //資料要擴充修改這裡就好(不可移到別處)
         sizeOptions:['0 - 3 Months','3 - 6 Months','6 - 12 Months','F'],
         colorOptions:['Blue', 'Brown', 'Gray', 'Green', 'Pink', 'Silver', 'Yellow'],
         markOptions: ['HOT', 'NEW'],
         categoryOptions:['緊身衣','毛衣','玩具','配件','洋裝','緊身褲'],
-        //資料要擴充修改這裡就好
+        
         //視窗狀態在store統一管理，是要在AdminHome使用
         showProductModal: false,// 新增/編輯視窗的開關
         showDeleteModal: false,// 刪除視窗的開關
         modalType: '',// 'new' | 'edit' | 'delete'
         discountInput: null, // 儲存折扣輸入
 
-        // 3/13
         isAddingVariant: false,
         newVariant: { color: '', size: ''},//儲存新增變體的color、size的值
-        openColors: [],//儲存被展開的變體color
+        openColors: [],//儲存被展開的變體color AdminProductModal.vue會使用到
         openSizes: [],//儲存被展開的變體size
         //儲存當前的數據
         tempProduct: {
@@ -37,7 +34,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
             imgurl: '',
             description: '',
             is_enabled: true,
-            owner: '管理員',
+            owner: '',
             updatedAt: '',
             startDate: '',
             endDate: '',
@@ -57,7 +54,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                     count: 0, // 庫存數量
                     sellCount: 0 ,// 銷售數量
                     is_enabled: true,
-                    owner: 'Admin User', // 預設管理員
+                    owner: '', // 預設管理員
                     updatedAt: '', // 更新時間
                 }
             ],
@@ -72,21 +69,14 @@ export const useAdminProductStore = defineStore('adminProductStore',{
         totalProductCount:(state)=>state.adminProducts.length,
         // 計算啟用的產品數量
         enabledProductCount: (state) => state.adminProducts.filter(p => p.is_enabled === true).length,
-        // 計算總頁數
-        // totalPages: (state) => Math.ceil(state.adminProducts.length / state.itemsPerPage) || 1,
-        // 計算當前分頁的產品
-        // paginatedProducts: (state) => {
-        //     const start = (state.currentPage - 1) * state.itemsPerPage;
-        //     return state.adminProducts.slice(start, start + state.  itemsPerPage);
-        // },
+       
         //新增/編輯/刪除視窗開的true
         isModalOpen: (state) =>{
             return   state.showDeleteModal || state.showProductModal
         },
-   
     },    
     actions:{
-        // 取得前台商品資料323
+        // 取得前台商品資料(啟用的商品)
         async getProducts() {
             try {
 
@@ -103,7 +93,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
             console.error("Error fetching products:", error);
             }
         },
-        //獲取後端商品數據並在 localStorage 存商品資料(原本)
+        //獲取後端商品數據並在 localStorage 存商品資料
         async getAdminProducts() {
             try {
                 // 先檢查 localStorage 是否有快取資料，在取出資料
@@ -111,7 +101,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 if (cachedProducts) {
                     this.adminProducts = JSON.parse(cachedProducts);
                 }
-                //dev/products
+                
                 const response = await axios.get("https://204ed3432b06d7af.mokky.dev/product");
   
                 // 儲存所有商品
@@ -126,115 +116,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
             }
         },
        
-        
-        
-        // 設定頁碼，確保不超過範圍
-        // handlePageChange(page) {
-        //     if (page < 1) page = 1;
-        //     if (page > this.totalPages) page = this.totalPages;
-        //     this.currentPage = page;
-        // },
-        // 標籤的切換邏輯
-        toggleMark(tempProduct, mark) {
-            const index = tempProduct.mark.indexOf(mark);
-            if (index === -1) {
-                tempProduct.mark.push(mark);
-            } else {
-                tempProduct.mark.splice(index, 1);
-            }
-        },
-        
-        // //更新商品 上架/下架 狀態   原版
-        // async updateProductStatus(productId, newStatus) {
-        //     try {
-        //         // const status = newStatus ? 1 : 0; // 確保發送時是數字dev/products
-        //       await axios.patch(`https://204ed3432b06d7af.mokky.dev/product/${productId}`, { is_enabled: newStatus });
-        //       const product = this.adminProducts.find(p => p.id === productId);
-        //       if (product) {
-        //         product.is_enabled = newStatus; // 更新前後端統一 true/false
-        //         // product.is_enabled = status; // 更新前端狀態
-        //       }
-        //     } catch (error) {
-        //       console.error('更新產品狀態失敗:', error);
-        //     }
-        // },
-        // 更新 is_expired 狀態 330  
-        // async updateProductExpiration(productId) {
-        //     try {
-        //         const product = this.adminProducts.find(p => p.id === productId);
-        //         if (!product) return;
-        
-        //         // 計算 `is_expired`
-        //         const now = new Date();
-        //         const isExpired = product.endDate
-        //             ? (new Date(product.endDate + 'T23:59:59') < now ? '1' : '0')
-        //             : '';
-        
-        //         // 發送 API 請求更新 `is_expired`
-        //         await axios.patch(`https://204ed3432b06d7af.mokky.dev/product/${productId}`, { is_expired: isExpired });
-        
-        //         // 更新前端狀態
-        //         product.is_expired = isExpired;  
-        //         console.log(`商品 ${productId} 的 is_expired 更新為:`, isExpired);
-                
-        //     } catch (error) {
-        //         console.error('更新商品過期狀態失敗:', error);
-        //     }
-        // },
-        // async updateProductStatus(productId, newStatus) {
-        //     try {
-        //         const product = this.adminProducts.find(p => p.id === productId);
-        //         if (!product) return;
-        
-        //         const now = new Date();
-        //         const isExpired = product.endDate 
-        //             ? (new Date(product.endDate + 'T23:59:59') < now ? '1' : '0') 
-        //             : '';
-        
-        //         // 發送 API 更新 `is_enabled` 和 `is_expired`
-        //         await axios.patch(`https://204ed3432b06d7af.mokky.dev/product/${productId}`, {
-        //             is_enabled: newStatus,
-        //             is_expired: isExpired // 新增 is_expired 到 API
-        //         });
-        
-        //         // 更新前端資料
-        //         product.is_enabled = newStatus;
-        //         product.is_expired = isExpired;
-        
-        //     } catch (error) {
-        //         console.error('更新產品狀態失敗:', error);
-        //     }
-        // },
-        //更新is_enabled 和 is_expired(ok)
-        // async updateProductStatus(productId, newStatus) {
-        //     try {
-        //         const product = this.adminProducts.find(p => p.id === productId);
-        //         if (!product) return;
-        
-        //         const now = new Date();
-        
-        //         if (product.endDate) {
-        //             const productEndDate = new Date(product.endDate + 'T23:59:59');
-        //             isExpired = productEndDate < now ? 1 : 0; // 過期為 1，未過期為 0（數字格式）
-        //         }
-        
-        //         // 確保 `is_expired` 值正確
-        //         console.log("更新的 is_expired:", isExpired, "類型:", typeof isExpired);
-        
-        //         // 發送 API 更新 `is_enabled` 和 `is_expired`
-        //         await axios.patch(`https://204ed3432b06d7af.mokky.dev/product/${productId}`, {
-        //             is_enabled: newStatus,
-        //             is_expired: isExpired // 這次確保發送正確值
-        //         });
-        
-        //         // 更新前端資料
-        //         product.is_enabled = newStatus;
-        //         product.is_expired = isExpired; // 確保前端同步更新
-        
-        //     } catch (error) {
-        //         console.error('更新產品狀態失敗:', error);
-        //     }
-        // },
+        //更新商品 上架/下架 狀態 更新 `is_enabled` 和 `is_expired`
         async updateProductStatus(productId, newStatus) {
             try {
                 const product = this.adminProducts.find(p => p.id === productId);
@@ -267,16 +149,10 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 console.error('更新產品狀態失敗:', error);
             }
         },
-        
-
-        
-        
-        
-
+    
         // 確認主產品新增商品按鈕
         async createProduct(product) {
             try {
-                //dev/products
                 const response = await axios.post('https://204ed3432b06d7af.mokky.dev/product', product);
                 this.adminProducts.push(response.data);
                 return response.data; // ✅ 回傳 API 回應
@@ -308,26 +184,8 @@ export const useAdminProductStore = defineStore('adminProductStore',{
 
                 console.log("即將更新的 product.id:", product.id);
 
-                // 同步更新前台資料
-        // this.products = this.products.map(product =>
-        //     product.id === updatedProduct.id ? { ...response.data } : product
-        //   );
-                 // 直接更新 this.products，確保 Vue 偵測到變更 324
-        // const indexx = this.products.findIndex(p => p.id === updatedProduct.id);
-        // if (indexx !== -1) {
-        //     this.products.splice(index, 1, { ...response.data }); // ✅ 確保 Vue 觸發 reactivity
-        // }
-        //      // ✅ 強制 Vue 重新偵測
-        // this.products = [...this.products];
-
-                 // 3. **同步更新前台 `productStore.products`**
-                // const productStore = useProductStore();
-                // productStore.updateProduct(response.data); // 讓前台即時更新商品資訊
-                // await productStore.getProducts(); // ✅ **確保前台重新獲取最新商品**
-                // 更新 localStorage 資料
-//   localStorage.setItem("products", JSON.stringify(productStore.products));
                 // 更新 localStorage
-        localStorage.setItem("products", JSON.stringify(this.products));
+                localStorage.setItem("products", JSON.stringify(this.products));
                 // console.log("前台 productStore 更新後:", JSON.stringify(productStore.products, null, 2));
             } catch (error) {
                 console.error('更新產品失敗', error.response?.data || error.message);
@@ -338,22 +196,14 @@ export const useAdminProductStore = defineStore('adminProductStore',{
         // 確認 主產品 + 變體 刪除產品按鈕 
         async deleteProduct(productId) {
             try {
-                //dev/products
                 await axios.delete(`https://204ed3432b06d7af.mokky.dev/product/${productId}`);
                 this.adminProducts = this.adminProducts.filter(p => p.id !== productId);
-                //323
-                // const productStore = useProductStore();
-                // await productStore.getProducts(); // ✅ **確保前台即時更新**
-                 // 同步更新前台資料
-        // this.products = this.products.filter(p => p.id !== productId);
-
-                 // 更新 localStorage 資料
-//   localStorage.setItem("products", JSON.stringify(productStore.products));
-                  // 更新 localStorage
-        localStorage.setItem("products", JSON.stringify(this.products));
+                
+                localStorage.setItem("products", JSON.stringify(this.products));
             } catch (error) {
                 console.error('刪除產品失敗', error);
             }
+                
         },
         //開啟新增產品、編輯產品、刪除產品視窗
         openModal(type,product = {}) {
@@ -361,7 +211,6 @@ export const useAdminProductStore = defineStore('adminProductStore',{
 
             if (type === 'new') {
                 this.tempProduct = this.getDefaultProduct(); // 使用預設值
-                // this.tempProduct.variants = [this.getDefaultVariant()]; // 初始化至少一個變體 
                 this.discountInput = null;  // 新增商品時清空折扣
                 this.showProductModal = true;
             }
@@ -378,10 +227,6 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 
                 this.discountInput = discountMark ? parseInt(discountMark.replace(/-|%/g, '')) : null;
 
-                // 格式化 updatedAt 為台灣時間
-                // this.tempProduct.updatedAt = this.formatTaiwanTime(new Date(product.updatedAt));
-                // this.tempProduct.updatedAt =this.formatTaiwanTime()
-        
                 this.showProductModal = true;
             }
 
@@ -395,8 +240,6 @@ export const useAdminProductStore = defineStore('adminProductStore',{
             this.showProductModal = false;
             this.showDeleteModal = false;
             this.tempProduct = null; // 關閉時重置，避免資料殘留
-           
-
         },
      
         //'收起變體' : '新增變體'按鈕，在這先創建主產品，因為才能產生變體的id
@@ -530,6 +373,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
         },
          //主要產品的初始化
         getDefaultProduct() {
+            const adminAuthStore = useAdminAuthStore(); // 取得目前登入的管理者
             return {
                 id: 0,//'' 設0為number型態
                 category:'',
@@ -541,7 +385,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 is_enabled: true, // 統一改成 true/false
                 description: '',
                 imgurl: '',
-                owner: 'Admin User', // 預設管理員
+                owner: adminAuthStore.adminName || '未知管理員', // ✅ 自動帶入
                 updatedAt: this.formatTaiwanTime(), // 更新時間
                 is_expired: false,//false未過期
                 startDate: '',
@@ -552,6 +396,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
         },
         //變體的初始化
         getDefaultVariant() {
+            const adminAuthStore = useAdminAuthStore(); // 同樣取得管理者
             return {
                 id:0,//''
                 size: '',
@@ -559,7 +404,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 count: 0, // 庫存數量
                 sellCount: 0 ,// 銷售數量
                 is_enabled: true,
-                owner: 'Admin User', // 預設管理員
+                owner: adminAuthStore.adminName || '未知管理員', // ✅ 自動帶入 目前登入的管理者是哪位
                 updatedAt: this.formatTaiwanTime(), // 更新時間
             };
         },
@@ -575,7 +420,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 imgurl: product.imgurl,
                 description: product.description,
                 is_enabled: product.is_enabled,
-                owner: '管理員',
+                owner: product.owner,
                 updatedAt: new Date().toISOString().split('T')[0],
                 startDate: product.startDate,
                 endDate: product.endDate,

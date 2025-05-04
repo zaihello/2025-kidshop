@@ -1,11 +1,9 @@
 import { defineStore } from 'pinia'
 import { useAdminProductStore } from '../stores/adminProductStore'
-import axios from 'axios'
 
 export const useProductStore = defineStore('productStore', {
   state: () => ({
-    // 商品資料
-    // products: [],
+    
     //搜尋商品的篩選條件
     filter: {
       price: { min: null, max: null },
@@ -38,44 +36,16 @@ export const useProductStore = defineStore('productStore', {
   }),
     // 邏輯需要處理副作用（如調用外部 API）
   actions: {
-    //獲取商品數據並在 localStorage 存商品資料 323可刪
-    async getProducts() {
-      try {
-          // 先檢查 localStorage 是否有快取資料
-          // const cachedProducts = localStorage.getItem("products");
-          // if (cachedProducts) {
-          //   this.products = JSON.parse(cachedProducts).map(product => ({
-          //       ...product,
-          //       is_enabled: Boolean(product.is_enabled) // 確保本地快取也是 true/false
-          //   }));
-          // }
-          // 先檢查 localStorage 是否有快取資料
-          const cachedProducts = localStorage.getItem("products");
-          if (cachedProducts) {
-              this.products = JSON.parse(cachedProducts);
-          }
-          //dev/products
-          const response = await axios.get("https://204ed3432b06d7af.mokky.dev/product");
-
-          // 儲存所有商品
-          this.products = response.data.filter(product => (product.is_enabled)) // 只保留 is_enabled === true 的商品
-          // 在 localStorage 存商品資料，這樣即使頁面刷新，商品也能立即顯示：
-          localStorage.setItem("products", JSON.stringify(this.products)); // 存入快取
-      } catch (error) {
-          console.error("Error fetching products:", error);
-      }
-    },
     // 在navigateToCategory(category)調用
     updateCategory(category) {
       this.filter.category = category;// 更新分類
       this.currentPage = 1; // 重置頁碼到第 1 頁
     },
-
-    //更新頁碼  分頁組件 新增
+    //更新頁碼  分頁組件 
     setPage(pageNumber) {
         this.currentPage = pageNumber;
     },
-    //同步路由中的參數(分類、頁碼}到 store
+    //同步路由中的參數(分類、頁碼}
     syncRouteParams(route) {
         const categoryName = route.query.category || 'All';// 預設為 'All'
         const pageNumber = parseInt(route.query.page, 10) || 1;// 預設為第 1 頁
@@ -85,11 +55,9 @@ export const useProductStore = defineStore('productStore', {
         this.currentPage = pageNumber;
     },
     
-     // 計算每個類別的商品數量
+     // 計算前台每個類別的商品數量(以啟用商品)
     categoryCounts(categoryItems) {
-     
         const categoryMap = {};// 累計每個類別的商品數量。
-
         const adminProductStore = useAdminProductStore()
         adminProductStore.products.forEach((product) => {
           const category = product.category || '未分類'; // 若沒有類別，顯示為 'Uncategorized'
@@ -104,105 +72,13 @@ export const useProductStore = defineStore('productStore', {
           };
         });
     },
-    
-    // 單一產品折扣後的價格更新到後端(勿刪)
-    // async updateProductPrice(product) {
-    //   const updatedPrice = this.calculateDiscountedPrice(product); // 計算新價格
-    //   try {
-    //     const response = await axios.patch(`https://204ed3432b06d7af.mokky.dev/products/${product.id}`, {
-    //       price: updatedPrice,
-    //     });
-    //     return response.data;
-    //   } catch (error) {
-    //     console.error(`更新產品 ${product.id}的價格失敗:`, error.message);
-    //   }
-      
-    // },
-    //add(勿刪)
-    // async updateProductPrice(product) {
-    //   const updatedPrice = this.calculateDiscountedPrice(product);
-      
-    //   try {
-    //     const response = await axios.patch(`https://204ed3432b06d7af.mokky.dev/products/${product.id}`, {
-    //       price: updatedPrice,
-    //     });
-    
-    //     // 不要直接改變原本的 `product.price`
-    //     this.products = this.products.map(p =>
-    //       p.id === product.id ? { ...p, price: updatedPrice } : p
-    //     );
-    
-    //     return response.data;
-    //   } catch (error) {
-    //     console.error(`更新產品 ${product.id} 的價格失敗:`, error.message);
-    //   }
-    // },
-    
-    // 批量更新所有折扣後的商品價格(勿刪)
-    // async updateAllProductPrices() {
-    //   const updatePromises = this.products.map((product) => this.updateProductPrice(product));
-    //   try {
-    //     await Promise.all(updatePromises);
-    //     console.log('所有產品價格已成功更新!');
-    //   } catch (error) {
-    //     console.error('無法更新產品價格:', error.message);
-    //   }
-    // },
-
-    
-    
-     
-    
-    //add
-    // toggleWishlist(product) {
-    //   const index = this.wishlist.findIndex(item => item.product_Id === product.id);
-    //   if (index > -1) {
-    //     this.wishlist.splice(index, 1); // 移除商品
-    //   } else {
-    //     this.wishlist.push({ product_Id: product.id }); // 添加商品
-    //   }
-    // },
-    
-    // async updateProduct(updatedProduct) {
-    //   try {
-    //       // 更新後端 API
-    //       const response = await axios.patch(`https://204ed3432b06d7af.mokky.dev/products/${updatedProduct.id}`, updatedProduct);
-
-    //       // **確保前台的 products 陣列同步更新**
-    //       const index = this.products.findIndex(p => p.id === updatedProduct.id);
-    //       if (index !== -1) {
-    //           this.products[index] = { ...response.data };
-    //       }
-    //   } catch (error) {
-    //       console.error('更新商品失敗:', error);
-    //   }
-    // },
-    //後台新增商品 323可刪
-    // addProduct(newProduct) {
-    //   this.products.push(newProduct); // 新增商品到前台列表
-    // },
-
-    //後台更新商品 323可刪
-    // updateProduct(updatedProduct) {
-
-    //   const index = this.products.findIndex(p => p.id === updatedProduct.id);
-    //   if (index !== -1) {
-    //       this.products[index] = { ...updatedProduct };// 更新前台 products 陣列
-    //       // ✅ **確保 Vue 會偵測變更**
-    //     // this.products.splice(index, 1, { ...updatedProduct });
-    //   }
-    // },
-    //後台刪除商品 323可刪
-    // removeProduct(productId) {
-    //   this.products = this.products.filter(p => p.id !== productId); // 移除刪除的商品
-    // },
   },
   getters: {
     
-     // 過濾符合篩選條件的商品
+    // 過濾符合篩選條件的商品
     filteredProducts(state) {
+      //
       const adminProductStore = useAdminProductStore()
-      //state.products
       let filtered = adminProductStore.products.filter((item) => {
           const { category, price, color, size, searchText } = state.filter;
           // 獲取所有商品價格的最小值
@@ -280,11 +156,6 @@ export const useProductStore = defineStore('productStore', {
       }
       return state.marks[markitem] || 'bg-gray-300'; // 匹配或預設為灰色
     },
-   
-    // 檢查商品是否在願望清單中(為顯示勾選商品的切換圖片樣式式)
-    // isInWishlist: (state) => (productId) => {
-    //   return state.wishlist.some(item => item.product_Id === productId);
-    // },
    
     // 計算商品顏色數量 直接返回 { name, count, class }，在 CardList.vue 內可以直接用 class 來渲染 Tailwind 樣式。
     colorCounts() {

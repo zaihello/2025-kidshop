@@ -1,4 +1,5 @@
-<!--header z-30 ；側邊欄 z-50 ;遮罩 z-40-->
+<!-- 簡化版  改進-->
+<!--header z-50 ；側邊欄 z-50 ;遮罩 z-40-->
 <script>
 import { useAuthStore } from '../stores/authStore'
 import { useWishlistStore } from '../stores/wishlistStore'
@@ -14,6 +15,16 @@ export default{
             // account
             isSidebarOpen: false,//漢堡選單開關
             activeIndex: null, // 記錄當前選中的索引，切換背景、文字顏色
+            sidebarLinks: [
+              { to: '/', label: '首頁' },
+              { to: '/shop', label: '商店' },
+              { to: '/about', label: '關於我們' },
+              { to: '/contact', label: '聯絡我們' },
+              { to: '/blog', label: '文章' },
+              { to: '/account/wishes', label: '追蹤清單' },
+              { to: '/login', label: '登入' },
+              { to: '/signup', label: '註冊' },
+            ],
         }
     },
     computed:{
@@ -37,17 +48,23 @@ export default{
       },
 
     },
-    methods:{
+    methods:{ 
       //登出
       async handleLogout() {
         try {
-          await logout(); // 呼叫登出方法
+          await logout();
           alert('已成功登出！');
-          this.$router.push('/shop'); // 在組件中進行跳轉
+          this.$router.push('/shop');
+          //解決登出時wishlist清空，但追蹤符號沒有取消問題
+          //location.reload() 會整個頁面重新加載，等於重新跑一次 mounted()、computed 等邏輯，這樣 isInWishlist() 就會回傳正確值了。
+          setTimeout(() => {
+            location.reload(); // 確保所有組件重新渲染
+          }, 100);
         } catch (error) {
           console.error('登出失敗:', error);
         }
       },
+
         //漢堡選單開關
       toggleSidebar() {
           this.isSidebarOpen = !this.isSidebarOpen;
@@ -72,247 +89,122 @@ export default{
 }
    
 </script>
+
 <template>
-  <!-- bg-orange-100 -->
-  <div id="app" class=" border-b">
-      <!-- 小螢幕版型區塊 -->
-    <div class=" px-4 py-5 flex items-center justify-between lg:justify-center fixed top-0 left-0 w-full bg-white shadow-md z-30 lg:hidden lg:bg-transparent lg:shadow-none    lg:z-0">
-  
-      <!-- 左邊小螢幕漢堡選單 -->
-      <button 
-        @click="toggleSidebar" 
-        class="text-gray-500 hover:text-gray-700 flex-shrink-0 lg:hidden">
-        <span class="material-icons">menu</span>
-      </button>
+  <div id="app">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 shadow-md bg-white lg:bg-orange-100">
+      <!-- 小螢幕導覽列 container mx-auto-->
+      <div class="flex items-center justify-between px-4 py-4 lg:hidden">
+        <!-- 漢堡選單 -->
+        <button @click="toggleSidebar" class="text-gray-600">
+          <span class="material-icons">menu</span>
+        </button>
 
-      <!-- 中間Logo -->
-      <div class="flex-1 flex justify-center items-center">
-        <a href="#" class="text-2xl font-bold">
-          <img src="/logo.svg" alt="Logo" class="inline-block h-10">
-        </a>
-      </div>
+        <!-- Logo -->
+        <router-link to="/shop" class="flex justify-center items-center">
+          <img src="/logo.svg" alt="Logo" class="h-10" />
+        </router-link>
 
-      <!-- 右側購物車圖示 -->
-      <div class="lg:hidden flex items-center">
-        <router-link to="/cart/cartlist" class="relative text-gray-500 hover:text-gray-700">
+        <!-- 購物車（小螢幕） -->
+        <router-link to="/cart/cartlist" class="relative text-gray-600">
           <span class="material-icons">shopping_bag</span>
-          <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center    justify-center">
-            {{ itemTypesCount}}
-          </span>
+          <span class="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ itemTypesCount }}</span>
         </router-link>
       </div>
-    </div>
-    <!-- 大螢幕版型區塊 -->
-    <div class="hidden lg:block lg:fixed lg:top-0 lg:left-0 lg:right-0 z-30 bg-orange-100 px-4 py-5">
-      
-      <div class="flex-1 flex justify-center items-center">
-        <a href="#" class="text-2xl font-bold">
-          <img src="/logo.svg" alt="Logo" class="inline-block h-10">
-        </a>
-      </div>
-      <div class="lg:flex lg:items-center lg:justify-between px-4 py-5 w-full 2xl:w-3/4 2xl:m-auto">
- 
-        <!-- 左側區塊：標題和導航鏈接 -->
-        <div class="flex items-center space-x-6 text-sm text-gray-700">
-          <router-link to="/about" class="flex items-center space-x-1 hover:text-blue-600">
-            <span class="material-icons">groups</span>
-            <span>關於我們</span>
-          </router-link>
-          <router-link to="/contact" class="flex items-center space-x-1 hover:text-blue-600">
-            <span class="material-icons">mail</span>
-            <span>聯絡我們</span>
-          </router-link>
-          <router-link to="/blog" class="flex items-center space-x-1 hover:text-blue-600">
-            <span class="material-icons">edit</span>
-            <span>文章</span>
-          </router-link>
-        </div>
 
-        <!-- 中間區塊：Shop -->
-        <div class="space-x-4 text-lg text-gray-800">
-          <router-link to="/shop" class="hover:text-blue-600">商店</router-link>
-        </div>
+      <!-- 大螢幕導覽列 class="hidden lg:flex items-center justify-between px-8 py-4 bg-orange-100"-->
+      <div class="hidden lg:block 2xl:w-3/4 2xl:m-auto py-8 space-y-4">
+         <!-- Logo -->
+        <router-link to="/shop" class="flex justify-center items-center">
+          <img src="/logo.svg" alt="Logo" class="h-10" />
+        </router-link>
+        
+        <div class=" lg:flex items-center justify-between">
+          <!-- 左邊連結 -->
+          <div class="flex gap-6 text-gray-700 text-sm">
+            <router-link to="/about" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
+              <span class="material-icons">groups</span> 關於我們
+            </router-link>
+            <router-link to="/contact" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
+              <span class="material-icons">mail</span> 聯絡我們
+            </router-link>
+            <router-link to="/blog" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
+              <span class="material-icons">edit</span> 文章
+            </router-link>
+          </div>
 
-        <!-- 右側區塊：登入和購物車按鈕 -->
-        <div class="space-x-4">
-          <!-- 未登入時顯示 -->
-          <ul v-if="!authStore.isLoggedIn" class="flex gap-4">
-            <li>
-              <router-link to="/login">登入</router-link>
-            </li>
-            <li>
-              <router-link to="/signup">註冊</router-link>
-            </li>
-          </ul>
-          <!-- 已登入時顯示 -->
-          <ul v-else class="flex gap-4">
-            <li>
-              <button @click="handleLogout" class="text-gray-500 hover:text-gray-700">登出</button>
-            </li>
-            <li>
-              <router-link to="/account/wishes" class="text-gray-500 hover:text-gray-700">
-                <span class="material-icons">person</span>
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/account/wishes" class="relative text-gray-500 hover:text-gray-700">
+          <!-- 中間連結 -->
+          <div>
+            <router-link to="/shop" class="text-lg font-medium hover:text-blue-600">商店</router-link>
+          </div>
+
+          <!-- 右邊操作 -->
+          <div class="flex gap-4 items-center">
+            <div v-if="!authStore.isLoggedIn"class="flex gap-6">
+              <router-link to="/login" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">登入</router-link>
+              <router-link to="/signup" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">註冊</router-link>
+            </div>
+
+            <div v-else class="flex gap-6">
+              <button @click="handleLogout" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">登出</button>
+              <router-link to="/account/wishes" class="relative flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
                 <span class="material-icons">favorite</span>
-                <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center    justify-center">{{ wishlistCounts }}</span>
+                
+                <span class="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ wishlistCounts }}</span>
               </router-link>
-            </li>
-            <li>
-              <router-link to="/cart/cartlist" class="relative text-gray-500 hover:text-gray-700">
+              <router-link to="/cart/cartlist" class="relative flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
                 <span class="material-icons">shopping_bag</span>
-                <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center    justify-center">{{ itemTypesCount}}</span>
+                <span class="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ itemTypesCount }}</span>
               </router-link>
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- 小螢幕摺疊式導航列 -->
-    <div class="relative">
-      <!-- 側邊欄 -->
-      <div
-        :class="{'translate-x-0': isSidebarOpen, '-translate-x-full': !isSidebarOpen}"
-        class="fixed top-0 left-0 h-full w-80 bg-white shadow-lg z-50 transition-transform duration-300"
-      >
-        <div class="flex justify-between items-center p-4 border-b">
-          <h2 class="text-lg font-semibold">Menu</h2>
-          <button @click="toggleSidebar" class="text-gray-500">X</button>
+    <!--小螢幕 側邊欄 z-50-->
+    <transition
+      enter-active-class="transition duration-300"
+      leave-active-class="transition duration-300"
+      enter-from-class="-translate-x-full opacity-0"
+      enter-to-class="translate-x-0 opacity-100"
+      leave-from-class="translate-x-0 opacity-100"
+      leave-to-class="-translate-x-full opacity-0"
+    >
+      <aside v-if="isSidebarOpen" class="fixed inset-0 z-50 flex">
+        <div class="w-64 bg-white shadow-lg p-4 space-y-4">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold">選單</h2>
+            <button @click="toggleSidebar" class="text-gray-500">X</button>
+          </div>
+          <nav>
+            <ul class="space-y-2">
+              <li v-for="(item, index) in sidebarLinks" :key="index">
+                <router-link
+                  :to="item.to"
+                  @click="setActive(index)"
+                  :class="[
+                    'block p-3 rounded hover:bg-gray-100',
+                    activeIndex === index ? 'bg-orange-200 text-white' : 'text-gray-700'
+                  ]"
+                >
+                  {{ item.label }}
+                </router-link>
+              </li>
+            </ul>
+          </nav>
         </div>
-      
-        <nav class="">
-          <ul class="space-y-2">
-            <router-link>
-              <li 
-                class="border-b-2 p-4 text-gray-800"
-                :class="{
-                  'bg-orange-200 text-white': activeIndex === 0 ,
-                  'hover:bg-gray-200': activeIndex !== 0
-                }"
-                @click="setActive(0)"
-              >首頁
-              </li>
-            </router-link>
-            <router-link to="/shop">
-              <li class="border-b-2 p-4 text-gray-800"
-                  :class="{
-                    'bg-orange-200 text-white': activeIndex === 1 ,
-                    'hover:bg-gray-200': activeIndex !== 1
-                  }"
-                  @click="setActive(1)">商店 
-              </li>
-            </router-link>
-            <router-link to="/about">
-              <li 
-                class="border-b-2 p-4 text-gray-800"
-                :class="{
-                    'bg-orange-200 text-white': activeIndex === 2 ,
-                    'hover:bg-gray-200': activeIndex !== 2
-                }"
-                @click="setActive(2)"
-              >關於我們
-              </li>
-            </router-link>
-            <router-link to="/contact">
-              <li 
-                class="border-b-2 p-4 text-gray-800"
-                :class="{
-                    'bg-orange-200 text-white': activeIndex === 3 ,
-                    'hover:bg-gray-200': activeIndex !== 3
-                }"
-                @click="setActive(3)"
-              >聯絡我們
-              </li>
-            </router-link>
-            <router-link to="blog">
-              <li 
-                class="border-b-2 p-4 text-gray-800"
-                :class="{
-                    'bg-orange-200 text-white': activeIndex === 4 ,
-                    'hover:bg-gray-200': activeIndex !== 4
-                }"
-                @click="setActive(4)"
-              >文章
-              </li>
-            </router-link>
-            <router-link 
-              to="/account/wishes" 
-              class="text-gray-500 hover:text-gray-700"
-            >
-              <li 
-                class="border-b-2 p-4 relative flex items-center gap-3" 
-                :class="{
-                    'bg-orange-200 text-white': activeIndex === 5 ,
-                    'hover:bg-gray-200': activeIndex !== 5
-                }"
-                @click="setActive(5)"
-              >
-                <div class="relative">
-                  <span class="material-icons ">favorite</span>
-                  <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ wishlistCounts }}</span>    
-                </div>
-                <span>追蹤清單</span>
-              </li>  
-            </router-link>  
-            
-            <router-link to="/login">
-              <li 
-                class="border-b-2 p-4"
-                :class="{
-                    'bg-orange-200 text-white': activeIndex === 6 ,
-                    'hover:bg-gray-200': activeIndex !== 6
-                }"
-                @click="setActive(6)"
-              >登入
+        <div class="flex-1 bg-black bg-opacity-50" @click="toggleSidebar"></div>
+      </aside>
+    </transition>
 
-              </li>
-            </router-link>
-            <router-link to="/signup">
-              <li 
-                class="border-b-2 p-4"
-                :class="{
-                    'bg-orange-200 text-white': activeIndex === 7 ,
-                    'hover:bg-gray-200': activeIndex !== 7
-                }"
-                @click="setActive(7)"
-              >註冊
-              </li>
-            </router-link>
-            
-          </ul>
-        </nav>
-      </div>
+    <!-- 主內容 -->
+    <main class="">
+      <router-view />
+    </main>
 
-      <!-- 遮罩背景 -->
-      <div
-        v-if="isSidebarOpen"
-        @click="toggleSidebar"
-        class="fixed inset-0 bg-black bg-opacity-50 z-40"
-      ></div>
-    </div>
-  
+    <!-- 頁腳 -->
+    <FrontLayoutFooter />
   </div>
-
-  <!-- 加入 margin-top 來避免被 Header 使用fixed遮擋  class="mt-28 lg:mt-44"-->
-  <div class="mt-28 lg:mt-44">
-    <router-view/>
-  </div>
-
-  <FrontLayoutFooter/>
-  
 </template>
-
-<style scoped>
-/* 側邊欄滑動效果 */
-.translate-x-0 {
-  transform: translateX(0);
-}
-
-.-translate-x-full {
-  transform: translateX(-100%);
-}
-
-</style>

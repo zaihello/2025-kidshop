@@ -12,54 +12,42 @@ export const useWishlistStore = defineStore('wishlistStore', {
   }),
   actions: {
     //獲取追蹤清單
+    //讀 localStorage，但背景偷偷 refresh
     async getWishlist() {
-      const authStore = useAuthStore(); // 获取 authStore 实例
+      const authStore = useAuthStore();
       const token = authStore.token;
       const userId = authStore.id;
-      // const userId = authStore.userId; // 使用从 authStore 获取的 userId
-  
-      // if (!token || !userId) {
-      //   console.error('Token and userId are required to fetch wishlist.');
-      //   return;
-      // }
-      
-      // 先從 localStorage 讀取數據，避免每次刷新時都顯示「加載中」
+    
+      // 先讀 localStorage 快速顯示，避免每次刷新時都顯示「加載中」
       const storedWishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
       if (storedWishlist.length > 0) {
         this.wishlist = storedWishlist;
-        this.isLoading = false; // 直接設置 isLoading 為 false
-        return;
       }
-
-      this.isLoading = true;
+    
+      this.isLoading = true; // 仍然顯示 loading
       try {
         // 根据 userId 获取该用户的追踪清单
         const { data: wishes } = await axios.get('https://204ed3432b06d7af.mokky.dev/wishes', {
           headers: { Authorization: `Bearer ${token}` },
           params: { user_id: userId }, // 通过 user_id 过滤数据
         });
-
-        // 获取商品数据dev/products
+         // 获取商品数据dev/products
         const { data: products } = await axios.get('https://204ed3432b06d7af.mokky.dev/product');
-  
+        // 最新 API 資料 → 整理 → 直接覆蓋 this.wishlist
         // 合并产品(商品詳細資料)和追踪清单数据
         this.wishlist = wishes.map(wish => {
           const product = products.find(p => p.id === wish.product_Id);// 找到對應的商品
-          // return product ? { ...product, ...wish, isWishlist: true  } : null; // 合併資料並標記已追蹤
-          return product ? { ...wish,...product, isWishlist: true } : null; 
-        }).filter(item => item); // 過濾掉 null 值（確保只保留有效商品）
-  
+          return product ? { ...wish, ...product, wishId: wish.id } : null; // 合併資料(避免 wish.id 被 product.id 覆蓋掉，要確保把 wish.id 儲存為 wishId)
+        }).filter(item => item);// 過濾掉 null 值（確保只保留有效商品）
         // 更新本地存储
         localStorage.setItem('wishlist', JSON.stringify(this.wishlist));
-        console.log('Successfully fetched wishlist:', this.wishlist);
+        console.log('Successfully refreshed wishlist:', this.wishlist);
       } catch (error) {
-        console.error('Failed to fetch wishlist:', error);
+        console.error('Failed to refresh wishlist:', error);
       } finally {
         this.isLoading = false;
       }
     },
-   
-    
      // 设置选中的分类
     filterByCategory(category) {
       this.selectedCategory = category;
@@ -69,54 +57,7 @@ export const useWishlistStore = defineStore('wishlistStore', {
     setCurrentPage(page) {
       this.currentPage = page;
     },
-
-   
-    // 1. 登入後才能添加或移除商品到追踪清单(商品列檔案使用)用於切換商品是否加入追蹤清單 原本
-  //   async toggleWishlist(product) {
-  //     const authStore = useAuthStore();
-  //     const token = authStore.token;
-  //     const userId = authStore.id;
-  
-  //     if (!token || !userId) {
-  //       console.error('Token and userId are required to modify wishlist.');
-  //       return;
-  //     }
-  //     // 查找商品是否已在追踪清单中
-  //     const index = this.wishlist.findIndex(item => item.product_Id === product.id);
-  //     console.log('Wishlist before operation:', this.wishlist); // 检查操作前的 wishlist
-
-  //     // 强制更新响应式 add
-  // // const updateWishlistState = () => {
-  // //   this.wishlist = [...this.wishlist]; // 使用 Vue 的响应式更新
-  // // };
-  
-  //     if (index === -1) {
-  //       // 添加商品
-  //       try {
-  //         await this.addToWishlist(product, userId, token);
-  //         product.isWishlist = true; // 更新 product.isWishlist
-  //         // updateWishlistState(); // 更新状态 add
-  //         // this.wishlist.push({ ...product, isWishlist: true });
-  //       } catch (error) {
-  //         console.error('Error adding to wishlist:', error);
-  //       }
-  //     } else {
-  //       // 移除商品
-  //       try {
-  //         await this.removeFromWishlist(product, index, token);
-  //         product.isWishlist = false; //  更新 product.isWishlist
-  //         // this.wishlist.splice(index, 1);
-  //         // updateWishlistState(); // 更新状态
-  //       } catch (error) {
-  //         // console.error('Error removing from wishlist:', error);
-  //         console.error('移除商品失败: 商品ID:', product.id, '用户ID:', userId, '错误详情:', error);
-
-  //       }
-  //     }
-  //     localStorage.setItem('wishlist', JSON.stringify(this.wishlist));
-  //     console.log('Wishlist after operation:', this.wishlist); // 检查操作后的 wishlist
-
-  //   },
+    // 1. 登入後才能添加或移除商品到追踪清单(商品列檔案使用)用於切換商品是否加入追蹤清單 
   async toggleWishlist(product) { 
     const authStore = useAuthStore();
     const token = authStore.token;
@@ -133,7 +74,6 @@ export const useWishlistStore = defineStore('wishlistStore', {
       // 商品已在願望清單中，執行移除
       try {
         await this.removeFromWishlist(product, token);
-        product.isWishlist = false; // 更新 product.isWishlist 狀態
       } catch (error) {
         console.error('移除商品失敗:', error);
       }
@@ -141,7 +81,6 @@ export const useWishlistStore = defineStore('wishlistStore', {
       // 商品不在願望清單，執行新增
       try {
         await this.addToWishlist(product, userId, token);
-        product.isWishlist = true; // 更新 product.isWishlist 狀態
       } catch (error) {
         console.error('添加商品失敗:', error);
       }
@@ -150,11 +89,7 @@ export const useWishlistStore = defineStore('wishlistStore', {
     localStorage.setItem('wishlist', JSON.stringify(this.wishlist));
     console.log('Wishlist after operation:', this.wishlist); // 操作後的 wishlist
   },
-  
-
-    
-    //2.添加願望商品  這裡好像有問題沒有const authStore = useAuthStore();const token = authStore.token; const userId = authStore.userId;
- 
+    //2.添加願望商品 
     async addToWishlist(product, userId, token) {
       
       try {
@@ -176,9 +111,8 @@ export const useWishlistStore = defineStore('wishlistStore', {
           ...this.wishlist,
           {
             ...product,// 保留產品資訊
-            wishId: wish.id, // 這是 /wishes 內的 ID，確保刪除時能用
+            wishId: wish.id, // 這是 /wishes 內的 ID 存成 wishId，確保刪除時能用
             product_Id: product.id, 
-            isWishlist: true,
           },
         ];
     
@@ -190,93 +124,31 @@ export const useWishlistStore = defineStore('wishlistStore', {
         console.error('添加商品到愿望清单时出错:', error);
       }
     },
-    
-    
-    // 3.移除願望商品
-
-    //原本
-    // async removeFromWishlist(product, index, token) {
-    //   try {
-    //     const authStore = useAuthStore();
-    //     const userId = authStore.id;
-    
-    //     // 1. 先從 API 獲取該使用者的 wishlist，確保 ID 正確
-    //     const { data: wishes } = await axios.get('https://204ed3432b06d7af.mokky.dev/wishes', {
-    //       headers: { Authorization: `Bearer ${token}` },
-    //       params: { user_id: userId },
-    //     });
-    
-    //     // 2. 在 wishlist 找到對應的 wish 物件
-    //     const wish = wishes.find(w => w.product_Id === product.id);
-    
-    //     if (!wish) {
-    //       console.error('找不到對應的 wish 物件，可能已經被刪除');
-    //       return;
-    //     }
-    
-    //     // 3. 發送 DELETE 請求，刪除該 wish 物件
-    //     await axios.delete(`https://204ed3432b06d7af.mokky.dev/wishes/${wish.id}`, {
-    //       headers: { Authorization: `Bearer ${token}` },
-    //     });
-    
-    //     // 4. 更新本地狀態 (從 wishlist 陣列刪除)
-    //     const updatedWishlist = [...this.wishlist];
-    //     updatedWishlist.splice(index, 1);
-    //     this.wishlist = updatedWishlist;
-    //     localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
-    
-    //     console.log('成功從追踪清單移除商品:', product);
-    //   } catch (error) {
-    //     console.log('移除商品時出錯:', error.response ? error.response.data : error);
-    //   }
-    // },
-    async removeFromWishlist(product, token) { 
+  
+    //在願望清單頁面移除願望商品
+    async removeFromWishlist(product, token) {
+      const item = this.wishlist.find(p => p.product_Id === product.id);
+      if (!item || !item.wishId) {
+        console.warn('找不到 wishId，無法刪除');
+        return;
+      }
+  
       try {
-        const authStore = useAuthStore();
-        const userId = authStore.id;
-    
-        // if (!userId || !token) {
-        //   console.error('Token 或 User ID 缺失，無法移除願望清單');
-        //   return;
-        // }
-    
-        // 1️⃣ 從 API 獲取 wishlist，確保 ID 正確
-        const { data: wishes } = await axios.get('https://204ed3432b06d7af.mokky.dev/wishes', {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { user_id: userId },
-        });
-    
-        // 2️⃣ 找到 wish 物件
-        const wish = wishes.find(w => w.product_Id === product.id);
-        if (!wish) {
-          console.error('找不到對應的 wish 物件，可能已經被刪除');
-          return;
-        }
-    
-        // 3️⃣ 發送 DELETE 請求
-        await axios.delete(`https://204ed3432b06d7af.mokky.dev/wishes/${wish.id}`, {
+        await axios.delete(`https://204ed3432b06d7af.mokky.dev/wishes/${item.wishId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-    
-        // 4️⃣ **更新本地 `wishlist` 狀態** 用 .filter() 來移除指定商品，
-        this.wishlist = this.wishlist.filter(item => item.product_Id !== product.id);
-        localStorage.setItem('wishlist', JSON.stringify(this.wishlist));
-    
-        console.log('成功從追踪清單移除商品:', product);
+  
+        this.wishlist = this.wishlist.filter(p => p.product_Id !== product.id);
       } catch (error) {
-        console.error('移除商品時出錯:', error.response ? error.response.data : error);
+        console.error('刪除願望清單項目失敗:', error);
       }
     },
-    
-    
-    
-    
-   
-    // 清空 wishlist 狀態(在authService使用)
+    // 清空 wishlist 狀態(在authService 登出使用)
     clearWishlist() {
       this.wishlist = []; // 清空追蹤清單
       localStorage.removeItem('wishlist'); // 清空本地存儲
     },
+    //
     isInWishlist(productId) {
       return this.wishlist.some(item => item.product_Id === productId);
     }
@@ -320,13 +192,8 @@ export const useWishlistStore = defineStore('wishlistStore', {
     totalPages(state) {
       return Math.ceil(state.filteredWishlist.length / state.itemsPerPage);
     },
-    // 檢查商品是否在願望清單中(為顯示勾選商品的切換圖片樣式式)
-    // isInWishlist(state) {
-    //   //商品的id 和 追蹤清單的product_Id 相等的話才符合
-    //   return (productId) => state.wishlist.some(item => item.product_Id === productId);
-    // },
   
   },
 });
 
-// 
+

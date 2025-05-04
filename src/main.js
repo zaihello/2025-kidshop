@@ -40,13 +40,9 @@ import CartList from './views/front/CartList.vue'
 import PayList from './views/front/PayList.vue'
 import OrderDone from './views/front/OrderDone.vue'
 import AccountOrderDetails from './views/front/AccountOrderDetails.vue'
-import LinePayPage from './views/front/LinePayPage.vue'
-import LinePay from './views/front/LinePay.vue'
 import CreditPayPage from './views/front/CreditPayPage.vue'
-import CreditPay from './views/front/CreditPay.vue'
 // import AdminOrderDetail from './views/admin/OrdersManagement/AdminOrderDetail.vue'
 
-import test from './views/front/test.vue'
 import test2 from './views/front/test2.vue'
 import test3 from './views/front/test3.vue'
 import test4 from './views/front/test4.vue'
@@ -60,6 +56,7 @@ const routes = [
         path:'/',
         name:'FrontLayout',
         component:FrontLayout,
+        // redirect:'/shop',//點擊/admin轉跳到此頁
         children:[
             {
                 path:'test4',
@@ -77,11 +74,7 @@ const routes = [
                 component:test2
             },    
 
-            {
-                path:'test',
-                name:'test',
-                component:test
-            },    
+          
             {
                 path:'',
                 name:'Home',
@@ -177,30 +170,13 @@ const routes = [
                         name:'PayList',
                         component:PayList
                     },
-                    //linepay付款頁面
-                    {
-                        path:'paylist/line/:id',
-                        name:'LinePayPage',
-                        component:LinePayPage
-                    },
-                     //linepay付款成功頁面
-                    {
-                        path:'paylist/linepay/:id',
-                        name:'LinePay',
-                        component:LinePay
-                    },
                     //credit付款頁面
                     {
                         path:'paylist/credit/:id',
                         name:'CreditPayPage',
                         component:CreditPayPage
                     },
-                    //credit付款成功頁面
-                    {
-                        path:'paylist/creditpay/:id',
-                        name:'CreditPay',
-                        component:CreditPay
-                    },
+                  
                     //訂購完成頁面
                     {
                         path:'orderdone',
@@ -218,19 +194,17 @@ const routes = [
         path:'/admin',
         name:'BackLayout',
         component:BackLayout,//頭部框架
-        redirect:'/admin/products',
         children:[
             {
                 path:'login',
                 name:'AdminLogin',
                 component:AdminLogin
             },
-           
             {   
                 path:'',
                 component:AdminLayout,// 側邊選單的主要 Layout
+                redirect:'/admin/products',//點擊/admin轉跳到此頁
                 children:[
-           
                     // 產品管理
                     {
                         path:'products',
@@ -286,67 +260,7 @@ const routes = [
             },
         ]
     },
-    //後台管理管理
-    // {   path:'/admin',
-    //     // name:'AdminLayout',
-    //     // component:AdminLayout,// 這個是後台的主要 Layout
-    //     component:AdminHome,
-    //     // redirect:'/admin/adminhome',// 預設導向到AdminHome
-    //     children:[
-    //         {
-    //             path:'login',
-    //             name:'AdminLogin',
-    //             component:AdminLogin
-    //         },
-    //         // 產品管理
-    //         {
-    //             path:'products',
-    //             // name:'AdminLayout',
-    //             component:ProductsManagement,// 產品管理首頁
-    //             // redirect:'/admin/adminlayout',// 預設導向到adminproductsmanagement
-    //             children:[
-    //                 {
-    //                     path:'',
-    //                     name: 'ProductList',
-    //                     component:ProductList
-    //                 },
-    //             ]
-    //         },
-    //         // 訂單管理
-    //         {
-    //             path:'orders',
-    //             component: OrdersManagement, // 訂單管理首頁
-    //             children:[
-    //                 {
-    //                     path:'',
-    //                     name: 'OrderList',
-    //                     component:OrderList,
-    //                 }
-    //             ]
-    //         },
-    //          // 用戶管理
-    //         {
-    //             path:'users',
-    //             component: UserManagement, // 用戶管理首頁
-    //             children:[
-    //                 {
-    //                     path:'admins',
-    //                     name: 'Admins',
-    //                     component:Admins,
-    //                 },
-    //                 {
-    //                     path:'members',
-    //                     name: 'Members',
-    //                     component:Members,
-    //                 },
-
-    //             ]
-    //         },
-
-    //     ]
-      
-       
-    // },
+    
 ]
 
 

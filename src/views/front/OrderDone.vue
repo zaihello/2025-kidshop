@@ -4,11 +4,10 @@ import { useCartStore } from '../../stores/cartStore'
 import { usePaymentStore } from '../../stores/paymentStore'
 import { useAuthStore } from '../../stores/authStore'
 import axios from 'axios'
-import test4 from '../front/test4.vue'
 
 
 export default{
-    components:{ CartNavbar,test4 },
+    components:{ CartNavbar, },
     data(){
       return{
         orderData: null,//若資料來自 API，初始化設 null 最安全、語意最明確。代表「尚未載入資料」，適合用來區分「尚未請求」和「已請求但為空資料」的情況
@@ -31,6 +30,7 @@ export default{
         }
     },
     methods:{
+      //使用者的訂單(只取最後一筆訂單為該次訂單)
       async getOrder(){
           const authStore = useAuthStore();
           const userId = authStore.id;
@@ -40,9 +40,18 @@ export default{
             const response = await axios.get(`https://204ed3432b06d7af.mokky.dev/orders?userId=${userId}`, {
               headers: { Authorization: `Bearer ${token}` },
           });
-             // 假設只取最後一筆訂單
+             // 只取最後一筆訂單
           this.orderData = response.data[response.data.length - 1]; 
           }catch{}
+      },
+      //格式化金額(3,000)
+      formatCurrency(value) {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD', // 可以更改為其他貨幣，如 'TWD'顯示 NT$或 'EUR'
+          minimumFractionDigits: 0,//顯示為 $50.00
+          maximumFractionDigits: 2,
+        }).format(value);
       },
     },
     mounted(){
@@ -51,12 +60,13 @@ export default{
 }
 </script>
 <template>
-  <div class="bg-stone-200">
-    <CartNavbar/>
-    <!-- <test4/> -->
-    <div class="w-full 2xl:w-3/4 2xl:m-auto p-8">
+  <div class="bg-stone-200 pt-16 pb-28">
+    <div class="mb-14">
+      <CartNavbar/>
+    </div>
+    <div class="w-full 2xl:w-3/4 2xl:m-auto px-8">
         <!-- 商品資訊(有勾選的商品) -->
-        <div v-if="orderData" class="bg-gray-100 p-8 rounded-lg shadow-md w-full">
+        <div v-if="orderData" class="bg-gray-100 p-6 rounded-lg shadow-md w-full mb-8">
           <!-- 表頭 (僅 md 以上顯示) -->
           <div class="hidden md:flex font-medium text-gray-700 border-b pb-2 mb-4">
             <div class="flex-[1]">商品編號</div>
@@ -107,7 +117,7 @@ export default{
             <!-- 售價 -->
             <div class="flex-[1.5]">
               <div class="md:hidden text-sm text-gray-500">售價</div>
-              ${{ item.price }}
+              {{ formatCurrency(item.price) }}
             </div>
 
             <!-- 數量 -->
@@ -119,7 +129,7 @@ export default{
             <!-- 金額 -->
             <div class="flex-[1.5]">
               <div class="md:hidden text-sm text-gray-500">金額</div>
-              ${{ item.subtotal }}
+              {{ formatCurrency(item.subtotal) }}
             </div>
           </div>
 
@@ -133,7 +143,7 @@ export default{
                  商品總價
                 </span>
                 <span class="font-semibold tracking-wide">
-                  ${{ orderData.total }}
+                  {{ formatCurrency(orderData.total) }}
                 </span>
               </div>
             </div>
@@ -159,7 +169,7 @@ export default{
             <div class="flex justify-end">
               <div class="w-full max-w-sm flex justify-between items-center font-bold text-lg">
                 <span>總付款金額</span>
-                <span class="text-red-600">${{ orderData.final_price }}</span>
+                <span class="text-red-600">{{ formatCurrency(orderData.final_price) }}</span>
               </div>
             </div>
           </div>
@@ -167,16 +177,15 @@ export default{
         </div>
         <!-- 訂單成立 -->
          <!-- class="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-2xl space-y-8" -->
-        <div v-if="orderData" class="bg-white shadow-lg rounded-2xl mt-20 p-8">
-            <div class="text-center space-y-2">
+        <div v-if="orderData" class="bg-white shadow-lg rounded-2xl  p-6 mb-14">
+            <div class="text-center space-y-2 mb-10">
                 <p class="text-2xl font-bold text-green-600">謝謝您！您的訂單已經成立！</p>
                 <p class="text-lg text-gray-700">訂單號碼：<span class="font-semibold text-black">{{ orderData.id }}</span></p>
                 <p class="text-gray-600">訂單確認電郵已發送到您的{{ orderData.user_info.email }}</p>
             </div>
             <!-- 訂單資訊 -->
-            <div class="space-y-6">
-                
-                <h2 class="text-xl font-semibold border-b pb-2 mb-2">📦 訂單資訊</h2>
+            <div class="space-y-2">
+                <h2 class="text-xl font-semibold border-b pb-2">📦 訂單資訊</h2>
                 <div class="flex justify-between text-gray-700">
                     <div><span class="font-medium">訂單日期：</span>{{orderData.created_at }}</div>
                     <div><span class="font-medium">訂單狀態：</span>{{orderData.status }}</div>
@@ -184,8 +193,8 @@ export default{
             </div>
 
             <!-- 訂購人資訊 -->
-            <div>
-                <h2 class="text-xl font-semibold border-b pb-2 mb-2">👤 訂購人資訊</h2>
+            <div class="space-y-2">
+                <h2 class="text-xl font-semibold border-b pb-2">👤 訂購人資訊</h2>
                 <div class="space-y-1 text-gray-700">
                     <div><span class="font-medium">姓名：</span>{{ orderData.user_info.name }}</div>
                     <div><span class="font-medium">電話號碼：</span>{{ orderData.user_info.tel }}</div>
@@ -193,12 +202,11 @@ export default{
             </div>
 
             <!-- 送貨資訊 -->
-            <div>
-                <h2 class="text-xl font-semibold border-b pb-2 mb-2">🚚 送貨資訊</h2>
+            <div class="space-y-2">
+                <h2 class="text-xl font-semibold border-b pb-2">🚚 送貨資訊</h2>
                 <div class="space-y-1 text-gray-700">
                     <div><span class="font-medium">收件人姓名：</span>{{ orderData.shipping_info.name }}</div>
                     <div><span class="font-medium">收件人電話號碼：</span>{{ orderData.shipping_info.tel }}</div>
-                    <!-- v-if="order?.delivery_info?.method" -->
                     <div ><span class="font-medium">送貨方式：</span>{{ orderData.delivery_info.method }} 
                     <button class="ml-2 px-3 py-1 bg-black text-white text-sm rounded hover:bg-gray-800">黑貓物流追蹤</button>
                     </div>
@@ -209,8 +217,8 @@ export default{
             </div>
 
             <!-- 付款資訊 -->
-            <div>
-                <h2 class="text-xl font-semibold border-b pb-2 mb-2">💳 付款資訊</h2>
+            <div class="space-y-2">
+                <h2 class="text-xl font-semibold border-b pb-2">💳 付款資訊</h2>
                 <div class="space-y-1 text-gray-700">
                     <div><span class="font-medium">付款方式：</span>{{ orderData.payment_info.method }}</div>
                     <div><span class="font-medium">付款狀態：</span><span class="text-red-600">{{ orderData.payment_info.status }}</span></div>
@@ -219,11 +227,9 @@ export default{
             </div>
        
         </div>
-        <div class="flex justify-center w-full py-10">
-          <!-- type="button" -->
-            <button @click="$router.push('/shop')" class="px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition">繼續購物</button>
-            <!-- type="button" -->
-            <button @click="$router.push('/account/orders')" class="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">查看訂單</button>
+        <div class="flex justify-between w-full">
+            <button @click="$router.push('/shop')" class="px-6 md:px-32 py-3 md:py-6 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition">繼續購物</button>
+            <button @click="$router.push('/account/orders')" class="px-6 md:px-32 py-3 md:py-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">查看訂單</button>
         </div>
     </div> 
   </div>  

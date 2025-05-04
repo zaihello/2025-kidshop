@@ -1,3 +1,4 @@
+<!-- 之後建立頁面 -->
 <script>
 import { useCartStore } from '../../stores/cartStore'
 export default{

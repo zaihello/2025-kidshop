@@ -1,4 +1,4 @@
-//管理員登入管理
+//後台管理員登入管理
 //負責存儲和管理(後台管理員)的狀態 (admin、token、role)。
 import { defineStore } from 'pinia';
 
@@ -7,7 +7,7 @@ export const useAdminAuthStore = defineStore('adminAuth', {
       admin: null,
       token: localStorage.getItem('adminToken') || '',
       role: localStorage.getItem('adminRole') || '',
-      id: localStorage.getItem('adminId') || '',
+      id: Number(localStorage.getItem('adminId')) || 0,//localStorage.getItem() 總是返回字串或 null 加上 Number
     }),
     getters: {
       isLoggedIn: state => !!state.token,//用來判斷顯示 登出按鈕
@@ -26,6 +26,7 @@ export const useAdminAuthStore = defineStore('adminAuth', {
             localStorage.setItem('adminId', admin.id);
             localStorage.setItem("adminName", admin.name); // 存入管理員名稱
         },
+        //登出清除本地管理員狀態
         clearAuth() {
             this.token = '';
             this.admin = null;

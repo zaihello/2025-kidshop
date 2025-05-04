@@ -17,42 +17,31 @@ export default {
         this.$emit('pageChange', pageNumber); // 通知父組件頁碼改變
       }
     },
-  },
-  // data() {
-  //   return {
-  //     productStore: useProductStore(),// 獲取 productStore
-  //   };
-  // },
-  // computed: {
-  //   //sate資料
-  //   currentPage() {
-  //     return this.productStore.currentPage;
-  //   },
-  //   totalPages() {
-  //     return this.productStore.totalPages;
-  //   },
-  // },
-  // methods: {
-  //   goToPage(pageNumber) {
-  //     if (pageNumber < 1 || pageNumber > this.totalPages) return; // 確保頁碼在有效範圍內
-  //     this.productStore.setPage(pageNumber); // 更新 Store 中的頁碼
+    // 計算分頁顯示範圍
+    pageRange() {
+      const range = [];
+      const delta = 2; // 顯示前後 2 頁
+      let start = Math.max(this.currentPage - delta, 1);
+      let end = Math.min(this.currentPage + delta, this.totalPages);
 
-  //     // 更新網址中的 page 參數
-  //     this.$router.push({
-  //       path: this.$route.path,
-  //       query: {
-  //         ...this.$route.query, // 保留現有查詢參數
-  //         page: pageNumber,
-  //       },
-  //     });
-  //   },
-  // },
+      // 加入省略號的邏輯
+      if (start > 1) range.push(1);
+      if (start > 2) range.push('...');
+      for (let i = start; i <= end; i++) {
+        range.push(i);
+      }
+      if (end < this.totalPages - 1) range.push('...');
+      if (end < this.totalPages) range.push(this.totalPages);
+
+      return range;
+    },
+  },
+
 }
 </script>
 <template>
-    <!-- v-if:只有在有商品時才顯示分頁控制按鈕 -->
-        <!-- @click="currentPage--" v-if="filteredProducts.length > 0"-->
-        <div v-if="totalPages > 1" class="flex justify-center mt-6 space-x-2">
+   
+        <div  class="flex justify-center mt-6 space-x-2">
             <button
                 @click="goToPage(currentPage - 1)"
                 :disabled="currentPage === 1"
@@ -60,17 +49,17 @@ export default {
             >
                 上一頁
             </button>
-            <!-- @click="currentPage = page" -->
+            <!-- 顯示頁碼範圍 -->
             <button
-                v-for="page in totalPages"
+                v-for="page in pageRange()"
                 :key="page"
                 @click="goToPage(page)"
-                :class="{'bg-gray-400 text-white': currentPage === page}"
-                class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                :disabled="page === '...'"
+                :class="{'bg-gray-400 text-white': currentPage === page, 'bg-gray-200 hover:bg-gray-300': page !== '...'}"
+                class="px-3 py-1 rounded "
             >
                 {{ page }}
             </button>
-            <!-- @click="currentPage++" -->
             <button
                 @click="goToPage(currentPage + 1)"
                 :disabled="currentPage === totalPages"

@@ -481,5 +481,10 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 product.price = product.OriginalPrice; // 沒有折扣時售價等於原價
             }
         },
+
+        // 清空 adminProductStore.js的本地資料(在authService 登出使用)
+        clearadminProduct() {
+            localStorage.removeItem('adminProducts');           
+        },
     }
 })

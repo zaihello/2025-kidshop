@@ -25,7 +25,6 @@ import AccountWishes from './views/front/AccountWishes.vue'
 import AccountCoupons from './views/front/AccountCoupons.vue'
 import AccountOrders from './views/front/AccountOrders.vue'
 import BackLayout from './views/BackLayout.vue'
-// import AdminHome from './views/admin/AdminHome.vue'
 import AdminLayout from './views/admin/AdminLayout.vue'
 import AdminLogin from './views/admin/AdminLogin.vue'
 import ProductList from './views/admin/ProductsManagement/ProductList.vue'
@@ -43,12 +42,6 @@ import AccountOrderDetails from './views/front/AccountOrderDetails.vue'
 import CreditPayPage from './views/front/CreditPayPage.vue'
 // import AdminOrderDetail from './views/admin/OrdersManagement/AdminOrderDetail.vue'
 
-import test2 from './views/front/test2.vue'
-import test3 from './views/front/test3.vue'
-import test4 from './views/front/test4.vue'
-
-
-
 
 const routes = [
    
@@ -58,23 +51,6 @@ const routes = [
         component:FrontLayout,
         // redirect:'/shop',//點擊/admin轉跳到此頁
         children:[
-            {
-                path:'test4',
-                name:'test4',
-                component:test4
-            },    
-            {
-                path:'test3',
-                name:'test3',
-                component:test3
-            },    
-            {
-                path:'test2',
-                name:'test2',
-                component:test2
-            },    
-
-          
             {
                 path:'',
                 name:'Home',
@@ -284,7 +260,7 @@ app.use(pinia);
 
 
 // 將 Router 傳遞給 Store
-const wishlistStore = useWishlistStore();
+// const wishlistStore = useWishlistStore(); 5/4
 // wishlistStore.setRouter(router);
 
 

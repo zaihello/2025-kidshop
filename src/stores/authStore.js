@@ -3,6 +3,7 @@
 
 import { defineStore } from 'pinia'
 import { useCartStore } from './cartStore'
+import { useWishlistStore } from './wishlistStore'
 
 // const API_URL = 'https://204ed3432b06d7af.mokky.dev/auth';
 //auth
@@ -31,6 +32,8 @@ export const useAuthStore = defineStore('authStore', {
     },
     clearAuth() {
       const cartStore = useCartStore()
+      const wishlistStore = useWishlistStore();
+      
       this.token = '';
       this.user = null;
       this.role = '';
@@ -39,6 +42,10 @@ export const useAuthStore = defineStore('authStore', {
       localStorage.removeItem('userToken');
       localStorage.removeItem('userRole');
       localStorage.removeItem('userId');  // 清除 userId
+
+       // 清除與使用者相關的其他狀態
+      cartStore.clearCartItems();// 清空購物車
+      wishlistStore.clearWishlist();// 清空追蹤清單
     },
   },
 });

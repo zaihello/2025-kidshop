@@ -153,8 +153,11 @@ export default{
                 
                 <span class="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ wishlistCounts }}</span>
               </router-link>
+              
+                <!-- -top-1 -right-1 translate-x-1/2-->
               <router-link to="/cart/cartlist" class="relative flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
                 <span class="material-icons">shopping_bag</span>
+              
                 <span class="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ itemTypesCount }}</span>
               </router-link>
             </div>

@@ -150,10 +150,11 @@ export default {
 <template>
 <div class="2xl:w-3/4 2xl:m-auto py-20">
     <!-- 頭:版型寬度 -->
-    <div class="pb-6">
+    <div class="pb-6 ">
       <CategorySwiper/>
     </div>
     <!-- 小螢幕Breadcrumb -->
+     <!--  -->
     <div class="lg:hidden px-2 pb-4">
         <!-- 麵包屑 -->
         <nav class="text-gray-600" aria-label="breadcrumb">
@@ -197,7 +198,7 @@ export default {
           <!-- 側邊欄 -->
           <div 
             :class="menuClass" 
-            class="fixed top-0 left-0 h-screen w-80 bg-white shadow-lg z-50 overflow-y-auto transition-transform duration-500">
+            class="fixed top-0 left-0 h-screen w-80 bg-white shadow-lg z-50 overflow-y-auto transition-transform duration-500 ">
             <!-- 關閉按鈕 -->
             <button @click="closeMenu" class="absolute top-4 right-4 text-gray-800">
               <svg 
@@ -215,7 +216,7 @@ export default {
             </button>
   
             <!-- 篩選內容 -->
-            <div class="p-6">
+            <div class="p-6 ">
               <!-- 搜尋商品 -->
               <div class="mb-6">
                 <h4 class="text-md font-semibold text-gray-700">搜尋商品</h4>
@@ -335,9 +336,10 @@ export default {
   
         <!-- 大螢幕專用區 -->
         <div class="hidden lg:block">
-          <div class="p-6 bg-white rounded-lg shadow">
+          <!-- bg-white -->
+          <div class="p-6 rounded-lg shadow">
             <!-- 篩選內容 (與小螢幕一致) -->
-            <div>
+            <div class="">
               <!-- 搜尋商品 -->
               <div class="mb-6">
                 <h4 class="text-md font-semibold text-gray-700">搜尋商品</h4>
@@ -457,7 +459,7 @@ export default {
       </div>
   
       <!-- 右側邊欄 -->
-      <div class="w-full lg:w-3/4">
+      <div class="w-full lg:w-3/4 ">
         <!-- 大螢幕Breadcrumb -->
         <div class="lg:flex lg:justify-between lg:items-center mb-8 hidden lg:block">
           <!-- 大螢幕Breadcrumb -->
@@ -479,7 +481,7 @@ export default {
         </div>
   
         <!-- 商品列表 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2 lg:px-0">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 px-2 gap-4 lg:px-0 ">
          
           <Card
             v-for="(product,index) in productStore.paginatedProducts"

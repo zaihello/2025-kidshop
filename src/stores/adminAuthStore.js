@@ -1,6 +1,7 @@
 //後台管理員登入管理
 //負責存儲和管理(後台管理員)的狀態 (admin、token、role)。
 import { defineStore } from 'pinia';
+import { useAdminProductStore } from './adminProductStore'
 
 export const useAdminAuthStore = defineStore('adminAuth', {
     state: () => ({
@@ -28,6 +29,7 @@ export const useAdminAuthStore = defineStore('adminAuth', {
         },
         //登出清除本地管理員狀態
         clearAuth() {
+          const adminProductStore = useAdminProductStore();
             this.token = '';
             this.admin = null;
             this.role = '';
@@ -38,12 +40,12 @@ export const useAdminAuthStore = defineStore('adminAuth', {
             localStorage.removeItem('adminRole');
             localStorage.removeItem('adminId');
             localStorage.removeItem('adminAccounts');
-            localStorage.removeItem('adminProducts');
             localStorage.removeItem('lastLogin');
             localStorage.removeItem('memberAccounts');
             localStorage.removeItem('adminName');
 
-
+            // 清除與管理員相關的其他狀態
+            adminProductStore.clearadminProduct();//清空 adminProductStore.js的本地資料
         },
    
     },

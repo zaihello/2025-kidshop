@@ -472,10 +472,10 @@ export const useCartStore = defineStore("cartStore",{
             localStorage.setItem("cartItems", JSON.stringify(this.cartItems));
         },
 
-        // 清空 購物車狀態(在authService 登出使用) 5/4
+        // 清空 購物車狀態(在authService 登出使用)
         clearCartItems() {
             this.cartItems = []; // 清空購物車
-            localStorage.removeItem('wishlist'); // 清空本地存儲
+            localStorage.removeItem('cartItems'); // 清空本地存儲
         },
 
       

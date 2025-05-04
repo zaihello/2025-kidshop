@@ -87,21 +87,13 @@ export async function adminLogin(credentials){
 
 // 登出（通用）
 export async function logout() {
-    const authStore = useAuthStore();
-    const adminAuthStore = useAdminAuthStore();
-    const wishlistStore = useWishlistStore();
-    const cartStore = useCartStore()
-  
+  const authStore = useAuthStore();
+  const adminAuthStore = useAdminAuthStore();
    
-      // 清空本地和狀態管理
-      authStore.clearAuth();// 清空 token 和 userId
-      adminAuthStore.clearAuth();
-      wishlistStore.clearWishlist();// 清空追蹤清單
+  authStore.clearAuth();
+  adminAuthStore.clearAuth()
       
-       // 清空購物車(isInCart狀態被清除)
-       cartStore.cartItems = [];
-   
-      console.log('登出成功，所有狀態已清空');
+  console.log('登出成功，所有狀態已清空');
 
 }
 

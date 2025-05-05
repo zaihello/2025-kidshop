@@ -1,4 +1,5 @@
 # 兒童商品網站
+![Uploading image.png…]()
 
 專案說明
 Demo Website:https://zaihello.github.io/2025-kidshop/#/shop

@@ -14,7 +14,6 @@ Vue Router
 Vue Axios
 Vee Validation
 Tailwindcss v3
-bootstrap5 icon
 Swiper
 Pinia
 Sweetalert2

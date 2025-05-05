@@ -74,17 +74,10 @@ export default{
         this.activeIndex = index; // 更新當前選中的索引
         this.isSidebarOpen = false; // 點擊後隱藏側邊欄
       },
-      //負責從 localStorage 加載購物車數據到內存中（Vue 的狀態）；使用於頁面加載或刷新時恢復數據 3/4
-      // loadCartFromLocalStorage(){
-      //   this.cartStore.loadCartFromLocalStorage()
-      // },
+      
     },
     mounted(){
-      // this.cartStore.initializeCart()// 確保購物車初始化(商品數量數字不會不見)
-      //  this.cartStore.getCartData({ initialize: true });
       this.cartStore.getCartData();
-       //3/4
-      //  this.loadCartFromLocalStorage();// 頁面載入時同步 LocalStorage 資料(才不會重新整理頁面時，出現購物車0的頁面)
     }
 }
    
@@ -93,7 +86,7 @@ export default{
 <template>
   <div id="app">
     <!-- Header -->
-    <header class="sticky top-0 z-50 shadow-md bg-white lg:bg-orange-100">
+    <header class="sticky top-0 z-50 shadow-md bg-white lg:bg-orange-100 ">
       <!-- 小螢幕導覽列 container mx-auto-->
       <div class="flex items-center justify-between px-4 py-4 lg:hidden">
         <!-- 漢堡選單 -->
@@ -114,13 +107,14 @@ export default{
       </div>
 
       <!-- 大螢幕導覽列 class="hidden lg:flex items-center justify-between px-8 py-4 bg-orange-100"-->
-      <div class="hidden lg:block 2xl:w-3/4 2xl:m-auto py-8 space-y-4">
+       <!-- hidden lg:block 2xl:w-3/4 2xl:m-auto py-8 space-y-4 原本-->
+      <div class="hidden lg:block w-full 2xl:w-3/4 2xl:m-auto py-6 space-y-4 bg-orange-100">
          <!-- Logo -->
         <router-link to="/shop" class="flex justify-center items-center">
           <img src="/logo.svg" alt="Logo" class="h-10" />
         </router-link>
-        
-        <div class=" lg:flex items-center justify-between">
+        <!-- overflow-hidden -->
+        <div class=" lg:flex items-center justify-between py-2">
           <!-- 左邊連結 -->
           <div class="flex gap-6 text-gray-700 text-sm">
             <router-link to="/about" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
@@ -146,20 +140,20 @@ export default{
               <router-link to="/signup" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">註冊</router-link>
             </div>
 
-            <div v-else class="flex gap-6">
+            <div v-else class="flex gap-6 ">
               <button @click="handleLogout" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">登出</button>
-              <router-link to="/account/wishes" class="relative flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
+            
+              <router-link to="/account/wishes" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
                 <span class="material-icons">favorite</span>
-                
-                <span class="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ wishlistCounts }}</span>
+                <span class=" bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ wishlistCounts }}</span>
               </router-link>
+
               
-                <!-- -top-1 -right-1 translate-x-1/2-->
-              <router-link to="/cart/cartlist" class="relative flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
+              <router-link to="/cart/cartlist" class=" flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
                 <span class="material-icons">shopping_bag</span>
-              
-                <span class="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ itemTypesCount }}</span>
+                <span class=" bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ itemTypesCount }}</span>
               </router-link>
+              
             </div>
           </div>
         </div>

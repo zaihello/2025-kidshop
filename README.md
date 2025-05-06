@@ -13,8 +13,8 @@ Demo Website:https://zaihello.github.io/2025-kidshop/#/shop
 Mokky 伺服器 RESTApi
 
 ## 使用套件 
-Vue 3 
-Vue Router 
+*Vue 3 
+*Vue Router 
 Vue Axios 
 Vee Validation 
 Tailwindcss v3 
@@ -31,13 +31,25 @@ Sweetalert2
 ![網站文章頁面](assets/Blog.png)
 
 聯絡我們頁面
-![網站關於我們](assets/Contact.png)
+![網站聯絡我們](assets/Contact.png)
 
 會員登入
-![網站關於我們](assets/Member-login.png)
+![網站會員登入](assets/Member-login.png)
 
 會員註冊
-![網站關於我們](assets/Member-registration.png)
+![網站會員註冊](assets/Member-registration.png)
+
+商品詳細頁面
+![網站商品詳細頁面](assets/Product-details-page.png)
+
+購物車
+![網站購物車](assets/shopping-list.png)
+
+會員帳號
+![網站會員帳號](assets/Member-account.png)
+
+後台管理
+![網站後台管理](assets/Backend-management.png)
 
 
 

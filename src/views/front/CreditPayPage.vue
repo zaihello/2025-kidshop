@@ -4,6 +4,8 @@ import axios from 'axios'
 //VeeValidate 驗證
 import { Form, Field, ErrorMessage, defineRule, configure } from 'vee-validate'
 import { required, numeric, min,max, regex } from '@vee-validate/rules'
+//時間套件
+import dayjs from 'dayjs'
 
 // 定義驗證規則
 defineRule('required', required)
@@ -60,6 +62,7 @@ export default {
   },
   created() {
     this.orderId = this.$route.params.id; // 因為路由是 /credit/:id
+    console.log('Order ID:', this.orderId);
     this.generateCaptcha();
     this.getOrder()
   },
@@ -94,12 +97,13 @@ export default {
 
     },
    
-    // 模擬付款完成按鈕
+    // 付款完成按鈕
     async completePayment() {
         await this.markOrderAsPaid(); // ⬅️ 先更新付款資訊
+        localStorage.setItem('orderPaid', 'true')  // ✅ 標記付款已完成(CartNavbar.vue)
         this.$router.push("/cart/orderdone"); // ⬅️ 再導頁 
     },
-    //結帳後有transaction_id、paid_at、status資料產生
+    //結帳後有transaction_id、paid_at、status資料產生；並產生紅利點數
     async markOrderAsPaid() {
       const authStore = useAuthStore();
       const token = authStore.token;
@@ -116,22 +120,77 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        // 合併原本的資料(原本資料會被覆蓋過去)再 patch
+        // 合併原本的資料(原本資料會被覆蓋過去)
         const updatedPaymentInfo = {
           ...data.payment_info,
           transaction_id: transactionId,
           paid_at: createdAt,
-          status: "已付款"
+          status: "paid" //已付款
         };
-
-        await axios.patch(`https://204ed3432b06d7af.mokky.dev/orders/${this.orderId}`, {
+        //合併資料並 PATCH
+        const { data:updatedDate } = await axios.patch(`https://204ed3432b06d7af.mokky.dev/orders/${this.orderId}`, {
           payment_info: updatedPaymentInfo
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
+        //如果狀態是 paid 就產生紅利點數
+        if(updatedDate.payment_info.status === "paid"){
+          const order = updatedDate
+          const earnedPoints = Math.floor(order.final_price/100) //100元1點紅利
+
+          await this.handlePointsCreation(order, earnedPoints);//紅利檢查與建立
+        }
+
       } catch (error) {
-        console.error("更新付款資訊失敗：", error);
+        console.error("付款處理或紅利產生失敗：", error);
+        console.log('錯誤訊息：', error.response?.data || error.message);
+      }
+    },
+    //紅利檢查與建立
+    async handlePointsCreation(order,earnedPoints){
+      const authStore = useAuthStore(); // ← 補回 token 來源
+      const token = authStore.token;
+
+      const { data:pointsData } =await axios.get(`https://204ed3432b06d7af.mokky.dev/points?user_id=${order.user_id}`)
+      const pointEntry = pointsData[0]
+      const now = new Date()
+
+      const newRecord ={
+        date:this.formatDateOnly(now),
+        points:earnedPoints,
+        activateDate:this.formatDateOnly(this.addDays(now,1)),//1天後紅利可使用
+        expireDate:this.formatDateOnly(this.addDays(now,366)),//紅利效期1年
+      }
+      //有物件
+      if(pointEntry){
+        const updatedSummary = {
+          ...pointEntry.summary,
+          pendingPoints:pointEntry.summary.pendingPoints + earnedPoints,
+          yearlyPoints:pointEntry.summary.yearlyPoints + earnedPoints,
+        }
+
+        await axios.patch(`https://204ed3432b06d7af.mokky.dev/points/${pointEntry.id}`,{
+          summary:updatedSummary,
+          records:[...pointEntry.records,newRecord]
+        },{
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      //沒物件
+      }else{
+        const initialPointsData = {
+          user_id:order.user_id,
+          summary:{
+            usablePoints:0,
+            pendingPoints:earnedPoints,
+            yearlyPoints:earnedPoints,
+          },
+          records:[newRecord]
+        }
+
+        await axios.post(`https://204ed3432b06d7af.mokky.dev/points`,initialPointsData,{
+          headers: { Authorization: `Bearer ${token}` }
+        })
       }
     },
 
@@ -163,6 +222,17 @@ export default {
         maximumFractionDigits: 2,
       }).format(value);
     },
+    // 5/8
+    formatDateTime(date) {
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+},
+formatDateOnly(date) {
+  return dayjs(date).format('YYYY-MM-DD');
+},
+addDays(date, days) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
   }
 };
 </script>

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { useAuthStore } from './authStore'
 import axios from 'axios';
+// import router from '@/router';
 
 export const useWishlistStore = defineStore('wishlistStore', {
   state: () => ({
@@ -64,7 +65,8 @@ export const useWishlistStore = defineStore('wishlistStore', {
     const userId = authStore.id;
   
     if (!token || !userId) {
-      console.error('Token and userId are required to modify wishlist.');
+      alert("請先登入以追蹤清單")
+      // router.push('/login');
       return;
     }
   

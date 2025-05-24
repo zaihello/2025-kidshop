@@ -8,7 +8,8 @@ export default{
         activeMenus: { // 確保有預設 key，避免 Vue 無法監聽 (追蹤展開的下拉選單)
           products: false,
           orders: false,
-          users: false
+          users: false,
+          marketing:false,
         }
       }
     },
@@ -110,6 +111,27 @@ export default{
                 :class="{ 'bg-orange-200 font-bold': isActive('/admin/users/members') }">
                 會員列表
               </router-link>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 行銷管理 -->
+        <div>
+          <button 
+            @click="toggleMenu('marketing')"
+            class="flex justify-between items-center w-full py-3 px-2 text-gray-800 hover:bg-gray-100 rounded-md font-semibold">
+            行銷管理
+            <span>{{ activeMenus.marketing ? '▲' : '▼' }}</span>
+          </button>
+          <ul v-show="activeMenus.marketing" class="pl-4 mt-2 space-y-2">
+            <li>
+              <router-link 
+                to="/admin/marketing/coupons"
+                class="block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700"
+                :class="{'bg-orange-200 font-bold':isActive('/admin/marketing/coupons')}"
+              >
+                滿額滿件優惠
+              </router-link>         
             </li>
           </ul>
         </div>

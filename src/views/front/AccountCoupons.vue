@@ -88,7 +88,7 @@ export default{
 }
 </script>
 <template>
-     <!-- 優惠卷 -->
+    <!-- 優惠卷 -->
     <div class=""> 
         <!-- v-if="heartData.length === 0" -->
         <div v-if="isLoading" class="bg-gray-200 h-72 flex items-center justify-center">

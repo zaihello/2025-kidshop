@@ -59,6 +59,9 @@ export default {
         <router-link to="/account/coupons" class="w-full text-center py-3 hover:bg-orange-300" active-class="bg-orange-700 text-white">
           優惠券
         </router-link>
+        <router-link to="/account/points" class="w-full text-center py-3 hover:bg-orange-300" active-class="bg-orange-700 text-white">
+          紅利點數
+        </router-link>
         <router-link to="/account/orders" class="w-full text-center py-3 hover:bg-orange-300" active-class="bg-orange-700 text-white">
           訂單
         </router-link>
@@ -83,6 +86,11 @@ export default {
           <li>
             <router-link to="/account/coupons" class="block px-5 py-3 text-gray-800 hover:bg-orange-300 hover:text-white transition-colors duration-200 text-lg font-medium" active-class="bg-orange-700 text-white">
               領取優惠券
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/account/points" class="block px-5 py-3 text-gray-800 hover:bg-orange-300 hover:text-white transition-colors duration-200 text-lg font-medium" active-class="bg-orange-700 text-white">
+              紅利點數
             </router-link>
           </li>
           <li>

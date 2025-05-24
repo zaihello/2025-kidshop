@@ -194,7 +194,7 @@ export default{
     <div v-if="product" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
        
       <!-- Modal content --><!-- 超過h-[600px] 自己可以滑動 overflow-y-auto -->
-      <div class="bg-white w-full max-w-md mx-4 rounded-2xl shadow-2xl relative p-6 overflow-y-auto h-[600px]">
+      <div class="bg-white w-full max-w-md mx-4 rounded-2xl shadow-2xl relative p-6 overflow-y-auto max-h-[90vh]">
        
         <button @click="$emit('close')" class="absolute top-2 right-1 w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700 text-3xl rounded-full hover:bg-gray-200 transition z-20 ">&times;</button>
   

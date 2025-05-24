@@ -13,6 +13,8 @@
     "@vee-validate/i18n": "^4.15.0",
     "@vee-validate/rules": "^4.15.0",
     "axios": "^1.7.7",
+    "dayjs": "^1.11.13",
+    "lodash-es": "^4.17.21",
     "pinia": "^2.3.0",
     "sweetalert2": "^11.18.0",
     "swiper": "^10.3.1",

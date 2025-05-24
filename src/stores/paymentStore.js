@@ -199,7 +199,7 @@ export const usePaymentStore =defineStore("payment",{
           return {
             created_at: createdAt,
             userId: authStore.id,
-            status: "處理中",
+            status: "processing",//處理中
             // payment_status: "未付款",
             total:cartStore.totalAmount,
             shipping_fee:this.shippingFee,
@@ -222,7 +222,7 @@ export const usePaymentStore =defineStore("payment",{
               method: this.selectedMethod.name || "未知",
               transaction_id: null,
               paid_at: null,
-              status: "未付款",
+              status: "unpaid",//未付款
 
             },
             delivery_info: {
@@ -260,10 +260,10 @@ export const usePaymentStore =defineStore("payment",{
           // console.log('✅ 載入後的 cartData:', cartStore.cartData);
 
           const userCart = cartStore.cartItems;
-          console.log("✅ 準備找購物車", userCart);
-          console.log("🧾 userId 是", userId);
+          // console.log("✅ 準備找購物車", userCart);
+          // console.log("🧾 userId 是", userId);
 
-          console.log('🛒 找到的購物車是',userCart)
+          // console.log('🛒 找到的購物車是',userCart)
 
           const orderData = this.convertCartToOrder();//將購物車變成order訂單
 
@@ -273,7 +273,7 @@ export const usePaymentStore =defineStore("payment",{
                 Authorization: `Bearer ${token}`,
               },
             });
-            console.log("✅ 訂單成功建立", data);
+            // console.log("✅ 訂單成功建立", data);
 
             await cartStore.clearSelectedItems();//刪除在/cartsdata結帳的商品
             this.orderInfo = this.getDefaultOrderInfo(); // ✅ 清空表單資料

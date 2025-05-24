@@ -20,7 +20,17 @@ export default{
     methods:{
         //如果已經訂購完成（isSubmitted === true），就不能回到「步驟一或步驟二」,只能留在「步驟三」訂購完成頁。
         goToStep(step) {
+
+            const isPaid = localStorage.getItem('orderPaid') === 'true'
+
+            // 若未付款，禁止點選「訂購完成」步驟
+            if (step.id === 3 && !isPaid) {
+                return
+            }
+
+            // 若付款完成後，不可點回前兩步
             if (this.isSubmitted && step.id !== 3) return
+
             this.$router.push(step.path)
         }
     },

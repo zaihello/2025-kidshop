@@ -23,6 +23,7 @@ import ProductDetails from './components/front/ProductDetails.vue'
 import AccountHome from './views/front/AccountHome.vue'
 import AccountWishes from './views/front/AccountWishes.vue'
 import AccountCoupons from './views/front/AccountCoupons.vue'
+import AccountPoints from './views/front/AccountPoints.vue'
 import AccountOrders from './views/front/AccountOrders.vue'
 import BackLayout from './views/BackLayout.vue'
 import AdminLayout from './views/admin/AdminLayout.vue'
@@ -34,6 +35,8 @@ import OrderList from './views/admin/OrdersManagement/OrderList.vue'
 import UserManagement from './views/admin/UserManagement/UserManagement.vue'
 import Admins from './views/admin/UserManagement/Admins.vue'
 import Members from './views/admin/UserManagement/Members.vue'
+import MarketingManagement from './views/admin/MarketingManagement/MarketingManagement.vue'
+import CouponAdmin from './views/admin/MarketingManagement/CouponAdmin.vue'
 
 import CartList from './views/front/CartList.vue'
 import PayList from './views/front/PayList.vue'
@@ -41,6 +44,13 @@ import OrderDone from './views/front/OrderDone.vue'
 import AccountOrderDetails from './views/front/AccountOrderDetails.vue'
 import CreditPayPage from './views/front/CreditPayPage.vue'
 // import AdminOrderDetail from './views/admin/OrdersManagement/AdminOrderDetail.vue'
+
+import test2 from './views/front/test2.vue'
+import test3 from './views/front/test3.vue'
+import test4 from './views/front/test4.vue'
+import test5 from './views/front/test5.vue'
+
+import AddCouponModal from './components/AddCouponModal.vue'
 
 
 const routes = [
@@ -51,6 +61,31 @@ const routes = [
         component:FrontLayout,
         // redirect:'/shop',//點擊/admin轉跳到此頁
         children:[
+            {
+                path:'AddCouponModal',
+                name:'AddCouponModal',
+                component:AddCouponModal
+            },
+            {
+                path:'test2',
+                name:'test2',
+                component:test2
+            },
+            {
+                path:'test3',
+                name:'test3',
+                component:test3
+            },
+            {
+                path:'test4',
+                name:'test4',
+                component:test4
+            },
+             {
+                path:'test5',
+                name:'test5',
+                component:test5
+            },
             {
                 path:'',
                 name:'Home',
@@ -113,6 +148,11 @@ const routes = [
                         path:'coupons',
                         name:'AccountCoupons',
                         component:AccountCoupons
+                    },
+                    {
+                        path:'points',
+                        name:'AccountPoints',
+                        component:AccountPoints
                     },
                     {
                         path:'orders',
@@ -229,6 +269,19 @@ const routes = [
 
                         ]
                     },
+                    //行銷管理   
+                    {
+                        path:'marketing',
+                        component:MarketingManagement,
+                        children:[
+                            {
+                                path:'coupons',
+                                name:'CouponAdmin',
+                                component:CouponAdmin,
+                            },
+                        ]
+                    },
+
 
                 ]
       

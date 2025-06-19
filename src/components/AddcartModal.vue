@@ -190,7 +190,6 @@ export default{
 }    
 </script>
 <template>
-   
     <div v-if="product" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
        
       <!-- Modal content --><!-- 超過h-[600px] 自己可以滑動 overflow-y-auto -->

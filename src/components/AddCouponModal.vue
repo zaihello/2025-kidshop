@@ -1,7 +1,6 @@
 <script setup>
-import { ref,reactive,watch } from 'vue'
+import { ref,reactive,watch,computed } from 'vue'
 import { toRefs } from 'vue';
-import axios from 'axios'
 import { merge } from 'lodash-es'
 
 
@@ -28,9 +27,9 @@ const form = reactive({
       campaignTitle: '',// 活動名稱
       selectedCondition: '',// none, reach, products, categories
       conditionSubType: '',// 最低金額 / 最少件數
-      OfferType: '',// percent, amount, gift
-      ApplyTo: '',// all, category, product, once
-      AutoApply: ''// enable, disable
+      offerType: '',// percent, amount, gift
+      applyTo: '',// all, category, product, once
+      autoApply: ''// enable, disable
     },
     percentDiscount: {
       discount: '',// %折扣
@@ -55,19 +54,19 @@ const form = reactive({
       selectedTags: []// 每一筆應是 { label: 'xxx', value: 'xxx', count: 123 }
     },
 
-    usageLimit: '' // 'unlimited', 'first', 'once'
+    // usageLimit: '' // 'unlimited', 'first', 'once'
   },
   //Accordion 3.優惠與標準
   promotion: {
     selectedMethod: '', // 'automatic' | 'UseCoupons' | 'RecommendedActivities'
 
-          // 自動套用優惠
+    // 自動套用優惠
     automatic: {
       usageLimit: '',       // 數字，代表次數
       unlimited: false,     // 是否無限
-      startDate: '',        // yyyy-MM-dd
-      endDate: '',          // yyyy-MM-dd
-      neverExpires: false   // 是否永不過期
+      promotionStartDate: null,        // yyyy-MM-dd
+      promotionEndDate: null,          // yyyy-MM-dd
+      neverExpiresPromotion: false   // 是否永不過期
     },
 
     // 使用優惠券
@@ -75,16 +74,19 @@ const form = reactive({
       selectedReceiveMethod: '', // 'InCenter' | 'EnterCouponCode' | 'GetCoupons'
       // 顯示在領卷中心
       inCenter: {
+        customReceiveCondition: [],  // ['First', 'Birthday'] 等 value 陣列
         usageLimit: '',       // 數字
         unlimited: false,
-        receiveStartDate: '',
-        receiveEndDate: '',
+        code:'',
+        receiveStartDate:null,
+        receiveEndDate: null,
         neverExpiresReceive: false,
-        promotionStartDate: '',
-        promotionEndDate: '',
-        neverExpiresPromotion: false
+        promotionStartDate: null,
+        promotionEndDate: null,
+        neverExpiresPromotion: false,
+        
       },
-      // 輸入優惠碼
+      // 輸入優惠卷代碼領取
       enterCouponCode: {
         selectedCodeType: '', // 'Universal' or 'Independent'
 
@@ -94,22 +96,22 @@ const form = reactive({
           showInMemberCenter: false,
           usageLimit:'',
           unlimited:false,
-          receiveStartDate: '',
-          receiveEndDate: '',
+          receiveStartDate: null,
+          receiveEndDate: null,
           neverExpiresReceive: false,
-          promotionStartDate: '',
-          promotionEndDate: '',
+          promotionStartDate: null,
+          promotionEndDate:null,
           neverExpiresPromotion: false
         },
 
         // 多組獨立代碼設定
         independent: {
-          codes: '', // 例如輸入多筆代碼
-          receiveStartDate: '',
-          receiveEndDate: '',
+          codes: [], // 例如輸入多筆代碼
+          receiveStartDate: null,
+          receiveEndDate: null,
           neverExpiresReceive: false,
-          promotionStartDate: '',
-          promotionEndDate: '',
+          promotionStartDate: null,
+          promotionEndDate: null,
           neverExpiresPromotion: false
         }
              
@@ -118,16 +120,16 @@ const form = reactive({
       getCoupons: {
         usageLimit: '',
         unlimited: false,
-        receiveStartDate: '',
-        receiveEndDate: '',
+        receiveStartDate: null,
+        receiveEndDate: null,
         neverExpiresReceive: false,
-        promotionStartDate: '',
-        promotionEndDate: '',
+        promotionStartDate: null,
+        promotionEndDate: null,
         neverExpiresPromotion: false
       }
     },
 
-    // 推薦活動
+    // 僅適用於推薦活動
     recommended: {
       usageLimit: '',
       unlimited: false
@@ -148,6 +150,44 @@ const form = reactive({
   },
 
 })
+
+//促銷方案(可擴充)
+const receiveConditions = ref([{
+  label: '限首次購買',
+  value: 'First',
+  description: '限尚未成立過訂單的顧客使用'
+},
+{
+  label: '生日月可領',
+  value: 'Birthday',
+  description: '顧客生日當月可以領取並使用此優惠券'
+}])
+
+// 使用優惠卷>顯示在領卷中心>領取限制(4選一)
+const selected = computed(() => form.promotion.useCoupons.inCenter.customReceiveCondition)
+const usageLimit = computed(() => form.promotion.useCoupons.inCenter.usageLimit)
+const unlimited = computed(() => form.promotion.useCoupons.inCenter.unlimited)
+//  當「已填使用次數限制」或「勾選無限次數」時，自訂條件應該被禁用。
+const isCustomConditionDisabled = computed(() => usageLimit.value !== '' || unlimited.value)
+// 當「已選自訂條件」或「已勾選無限」時，使用次數輸入框應該被禁用。
+const isUsageLimitDisabled = computed(() => selected.value.length > 0 || unlimited.value)
+// 當「有自訂條件」或「有填使用次數限制」時，「無限次數」選項應該被禁用。
+const isUnlimitedDisabled = computed(() => selected.value.length > 0 || !!usageLimit.value)
+
+//使用優惠卷>顯示在領卷中心>領取限制 First input 和 Birthday input 不能同時存在
+watch(
+  () => form.promotion.useCoupons.inCenter.customReceiveCondition,
+  (newVal) => {
+    // 如果同時選了 First 和 Birthday，保留最後一個選擇，移除另一個
+    if (newVal.includes('First') && newVal.includes('Birthday')) {
+      const lastSelected = newVal[newVal.length - 1]
+      form.promotion.useCoupons.inCenter.customReceiveCondition =
+        lastSelected === 'First' ? ['First'] : ['Birthday']
+    }
+  },
+  { deep: true }
+)
+
 
 const selectedOption = ref('') //一般會員、VIP、VVIP(Accordion 2 - 目標群組)
 // 下拉選單選項（只負責顯示 label / value）
@@ -189,9 +229,9 @@ const submitForm = async (formData = form) => {
           campaignTitle: formData.campaign.basic.campaignTitle,
           selectedCondition: formData.campaign.basic.selectedCondition,
           conditionSubType: formData.campaign.basic.conditionSubType,
-          offerType: formData.campaign.basic.OfferType,
-          applyTo: formData.campaign.basic.ApplyTo,
-          autoApply: formData.campaign.basic.AutoApply
+          offerType: formData.campaign.basic.offerType,
+          applyTo: formData.campaign.basic.applyTo,
+          autoApply: formData.campaign.basic.autoApply
         },
         percentDiscount: {
           discount: formData.campaign.percentDiscount.discount,
@@ -212,7 +252,7 @@ const submitForm = async (formData = form) => {
         tags: {
           selectedTags: formData.targetGroup.tags.selectedTags,
         },
-        usageLimit: formData.targetGroup.usageLimit,
+        // usageLimit: formData.targetGroup.usageLimit,
       },
       // ✅ Accordion 3 - 優惠與標準
       promotion: {
@@ -221,23 +261,25 @@ const submitForm = async (formData = form) => {
         automatic: {
           usageLimit: formData.promotion.automatic.usageLimit,
           unlimited: formData.promotion.automatic.unlimited,
-          startDate: formData.promotion.automatic.startDate,
-          endDate: formData.promotion.automatic.endDate,
-          neverExpires: formData.promotion.automatic.neverExpires,
+          promotionStartDate: formData.promotion.automatic.promotionStartDate,
+          promotionEndDate: formData.promotion.automatic.promotionEndDate,
+          neverExpiresPromotion: formData.promotion.automatic.neverExpiresPromotion,
         },
 
         useCoupons: {
           selectedReceiveMethod: formData.promotion.useCoupons.selectedReceiveMethod,
 
           inCenter: {
+            customReceiveCondition:formData.promotion.useCoupons.inCenter.customReceiveCondition,
             usageLimit: formData.promotion.useCoupons.inCenter.usageLimit,
             unlimited: formData.promotion.useCoupons.inCenter.unlimited,
+            code:formData.promotion.useCoupons.inCenter.code,
             receiveStartDate: formData.promotion.useCoupons.inCenter.receiveStartDate,
             receiveEndDate: formData.promotion.useCoupons.inCenter.receiveEndDate,
             neverExpiresReceive: formData.promotion.useCoupons.inCenter.neverExpiresReceive,
             promotionStartDate: formData.promotion.useCoupons.inCenter.promotionStartDate,
             promotionEndDate: formData.promotion.useCoupons.inCenter.promotionEndDate,
-            neverExpiresPromotion: formData.promotion.useCoupons.inCenter.neverExpiresPromotion,
+            neverExpiresPromotion: formData.promotion.useCoupons.inCenter.neverExpiresPromotion
           },
 
           enterCouponCode: {
@@ -297,14 +339,7 @@ const submitForm = async (formData = form) => {
       },
 
     }
-    // const token = localStorage.getItem('adminToken')
-
-    // const response = await axios.post(`https://204ed3432b06d7af.mokky.dev/coupons`,payload,{
-    //   headers:{
-    //     Authorization: `Bearer ${token}`
-    //   }
-    // })
-    // alert('新增優惠券成功！')
+   
     // 如果是編輯模式，補上 id
     if (formData.id) {
       payload.id = formData.id
@@ -385,17 +420,6 @@ const removeSelectedTag = (index) => {
   form.targetGroup.tags.selectedTags.splice(index,1)
 }
 
-// watch(
-//   //編輯、新增
-//   () => props.couponData,//父元件傳進來的資料。(監聽的目標)
-//   (newVal) => {
-//     if(newVal){
-//       Object.assign(form,newVal)//若 props 有資料，就合併到 form
-//     }
-//   }, 
-//   {immediate:true}
-// )
-
 watch(
    //編輯、新增
   () => props.couponData,
@@ -407,6 +431,7 @@ watch(
   },
   { immediate: true }
 )
+
 
 </script>
 
@@ -455,11 +480,14 @@ watch(
                     <input type="radio" id="reach" value="reach" v-model="form.campaign.basic.selectedCondition" name="condition">
                     <label for="reach">當全單達到...</label>
                     <div class="flex-1 min-h-[40px]">
-                      <select v-if="form.campaign.basic.selectedCondition === 'reach'"  name="" id="" class="p-2 border max-w-56 w-full ">
+                      <select 
+                        v-if="form.campaign.basic.selectedCondition === 'reach'" 
+                        v-model="form.campaign.basic.conditionSubType"  
+                        name="" id="" class="p-2 border max-w-56 w-full ">
                         <!--  -->
                         <option value="">請選擇</option>
-                        <option value="amount">最低金額</option>
-                        <option value="quantity">最少件數</option>
+                        <option value="miniAmount">最低金額</option>
+                        <option value="miniPieces">最少件數</option>
                       </select>
                     </div>
                   </div>
@@ -467,10 +495,13 @@ watch(
                     <input type="radio" id="products" value="products" name="condition" v-model="form.campaign.basic.selectedCondition">
                     <label for="products">當指定商品達到...</label>
                     <div class="flex-1 min-h-[40px]">
-                      <select v-if="form.campaign.basic.selectedCondition === 'products'"  name="" id="" class="p-2 border max-w-56 w-full">
+                      <select 
+                        v-if="form.campaign.basic.selectedCondition === 'products'"
+                        v-model="form.campaign.basic.conditionSubType"    
+                        name="" id="" class="p-2 border max-w-56 w-full">
                         <option value="">請選擇</option>
-                        <option value="">最低金額</option>
-                        <option value="">最少件數</option>
+                        <option value="miniAmount">最低金額</option>
+                        <option value="miniPieces">最少件數</option>
                       </select>
                     </div>
                   </div>
@@ -478,10 +509,13 @@ watch(
                     <input type="radio" id="categories" value="categories" v-model="form.campaign.basic.selectedCondition" name="condition">
                     <label for="categories">當指定分類達掉...</label>
                     <div class="flex-1 min-h-[40px]">
-                      <select v-if="form.campaign.basic.selectedCondition === 'categories'"  name="" id="" class="p-2 border max-w-56 w-full">
+                      <select 
+                        v-if="form.campaign.basic.selectedCondition === 'categories'"
+                        v-model="form.campaign.basic.conditionSubType"  
+                        name="" id="" class="p-2 border max-w-56 w-full">
                         <option value="">請選擇</option>
-                        <option value="">最低金額</option>
-                        <option value="">最少件數</option>
+                        <option value="miniAmount">最低金額</option>
+                        <option value="miniPieces">最少件數</option>
                       </select>
                     </div>
                   </div>
@@ -490,8 +524,8 @@ watch(
                 <li class="border-b border-gray-300 pb-4 space-y-3">
                   <h4>選擇優惠類型</h4>
                   <div class="space-x-2">
-                    <label for="OfferType">優惠類型</label>
-                    <select name="" id="OfferType" v-model="form.campaign.basic.OfferType" class="p-2 border max-w-56 w-full">
+                    <label for="offerType">優惠類型</label>
+                    <select name="" id="offerType" v-model="form.campaign.basic.offerType" class="p-2 border max-w-56 w-full">
                       <option value="">請選擇</option>
                       <option value="percent">%折扣</option>
                       <option value="amount">折扣金額</option>
@@ -499,8 +533,8 @@ watch(
                     </select>
                   </div>
                   <div class="space-x-2">
-                    <label for="ApplyTo">套用至</label>
-                    <select name="" id="ApplyTo" v-model="form.campaign.basic.ApplyTo" class="p-2 border max-w-56 w-full">
+                    <label for="applyTo">套用至</label>
+                    <select name="" id="ApplyTo" v-model="form.campaign.basic.applyTo" class="p-2 border max-w-56 w-full">
                       <option value="">請選擇</option>
                       <option value="all">全店</option>
                       <option value="category">指定分類</option>
@@ -513,70 +547,73 @@ watch(
                 
                     <div class="relative group">
                       <div class="space-x-2">
-                        <input type="radio" name="grand" id="enable" value="enable" v-model="form.campaign.basic.AutoApply">
+                        <input type="radio" name="grand" id="enable" value="enable" v-model="form.campaign.basic.autoApply">
                         <label for="enable">開啟</label>
                       </div>
                       <!-- 提示訊息 -->
-                      <div v-if="form.campaign.basic.AutoApply === 'enable'" class="absolute -top-14 left-1/2 -translate-x-1/2 bg-black text-white text-sm text-center rounded px-2 py-1 min-w-60 max-w-96 opacity-0 group-hover:opacity-100 transition duration-200">
+                      <div v-if="form.campaign.basic.autoApply === 'enable'" class="absolute -top-14 left-1/2 -translate-x-1/2 bg-black text-white text-sm text-center rounded px-2 py-1 min-w-60 max-w-96 opacity-0 group-hover:opacity-100 transition duration-200">
                     滿 100 折 10 元 滿 100 折 10 元 滿 100 折 10 元 滿 100 折 10 元
                       </div>
                     </div>
                 
                     <div class="relative group">
                       <div class="space-x-2">
-                        <input type="radio" name="grand" id="disable" value="disable" v-model="form.campaign.basic.AutoApply">
+                        <input type="radio" name="grand" id="disable" value="disable" v-model="form.campaign.basic.autoApply">
                         <label for="disable">關閉</label>
                       </div>
                       <!-- 提示訊息 -->
-                      <div v-if="form.campaign.basic.AutoApply === 'disable'" class="absolute -top-14 left-1/2 -translate-x-1/2 bg-black text-white text-sm text-center rounded px-2 py-1 min-w-60 max-w-96 opacity-0 group-hover:opacity-100 transition duration-200">
+                      <div v-if="form.campaign.basic.autoApply === 'disable'" class="absolute -top-14 left-1/2 -translate-x-1/2 bg-black text-white text-sm text-center rounded px-2 py-1 min-w-60 max-w-96 opacity-0 group-hover:opacity-100 transition duration-200">
                     滿 200 仍折 10 元 滿 200 仍折 10 元 滿 200 仍折 10 元
                       </div>
                     </div>
                   </div>
                 </li>
                 <!-- 3. -->
-                <li class="border-b border-gray-300 pb-4 space-y-3">
+                <li v-if="form.campaign.basic.offerType === 'percent' || form.campaign.basic.offerType === 'amount'" class="border-b border-gray-300 pb-4 space-y-3">
                   <h4>設定活動和條件</h4>
                   <!-- % -->
-                  <div class="flex ">
-                    <div class="flex items-center">
-                      <label for="PercentDiscount">折扣</label>
-                      <div class="flex w-40"> 
-                        <input type="text" id="PercentDiscount" class="border border-gray-300 px-3 py-1 w-full rounded-l" v-model="form.campaign.percentDiscount.discount">
-                        <span class="border border-gray-300 border-l-0 bg-gray-100 px-3 py-1 flex items-center rounded-r text-gray-600">%</span>
+                  <div v-if="form.campaign.basic.offerType === 'percent'" class="space-y-1" >
+                    <div class="flex ">
+                      <div class="flex items-center">
+                        <label for="PercentDiscount">折扣</label>
+                        <div class="flex w-40"> 
+                          <input type="text" id="PercentDiscount" class="border border-gray-300 px-3 py-1 w-full rounded-l" v-model="form.campaign.percentDiscount.discount">
+                          <span class="border border-gray-300 border-l-0 bg-gray-100 px-3 py-1 flex items-center rounded-r text-gray-600">%</span>
+                        </div>
                       </div>
-                    </div>
-                    <div class="flex items-center">
-                      <label for="PercentThreshold">當購物滿</label>
-                      <div class="flex w-40">
-                        <span class="border border-gray-300 border-r-0 bg-gray-100 px-3 py-1 flex items-center rounded-l text-gray-600">NT$</span>
-                        <input type="text" name="" id="PercentThreshold" v-model="form.campaign.percentDiscount.threshold" class="border border-gray-300 px-3 py-1 w-full rounded-r">
+                      <div class="flex items-center">
+                        <label for="PercentThreshold">當購物滿</label>
+                        <div class="flex w-40">
+                          <span class="border border-gray-300 border-r-0 bg-gray-100 px-3 py-1 flex items-center rounded-l text-gray-600">NT$</span>
+                          <input type="text" name="" id="PercentThreshold" v-model="form.campaign.percentDiscount.threshold" class="border border-gray-300 px-3 py-1 w-full rounded-r">
+                        </div>
                       </div>
+                      <button>移除</button>
                     </div>
-                    <button>移除</button>
+                    <p class="text-sm text-gray-600 ">填寫1-99之間任何數字。例:20代表八折；70代表三折。</p>
                   </div>
-                  <p class="text-sm text-gray-600 ">填寫1-99之間任何數字。例:20代表八折；70代表三折。</p>
                   <!-- 金額 -->
-              
-                  <div class="flex">
-                    <div class="flex items-center">
-                      <label for="AmountDiscount">折扣</label>
-                      <div class="flex  w-40">
-                        <span class="border border-gray-300 border-l-0 bg-gray-100 px-3 py-1 flex  items-center  rounded-l text-gray-600">NT$</span>
-                        <input type="text" id="AmountDiscount" v-model="form.campaign.amountDiscount.discount" class="border border-gray-300 px-3 py-1 w-full rounded-r">
+                  <div v-if="form.campaign.basic.offerType === 'amount'" class="space-y-1">
+                    <div class="flex">
+                      <div class="flex items-center">
+                        <label for="AmountDiscount">折扣</label>
+                        <div class="flex  w-40">
+                          <span class="border border-gray-300 border-l-0 bg-gray-100 px-3 py-1 flex  items-center  rounded-l text-gray-600">NT$</span>
+                          <input type="text" id="AmountDiscount" v-model="form.campaign.amountDiscount.discount" class="border border-gray-300 px-3 py-1 w-full rounded-r">
+                        </div>
                       </div>
-                    </div>
-                    <div class="flex items-center">
-                      <label for="AmountThreshold">當購物滿</label>
-                      <div class="flex w-40">
-                        <span class="border border-gray-300 border-r-0 bg-gray-100 px-3 py-1 flex items-center rounded-l text-gray-600">NT$</span>
-                        <input type="text" id="AmountThreshold" v-model="form.campaign.amountDiscount.threshold" class="border bporder-gray-300 px-3 py-1 w-full rounded-r">
-                      </div>
+                      <div class="flex items-center">
+                        <label for="AmountThreshold">當購物滿</label>
+                        <div class="flex w-40">
+                          <span class="border border-gray-300 border-r-0 bg-gray-100 px-3 py-1 flex items-center rounded-l text-gray-600">NT$</span>
+                          <input type="text" id="AmountThreshold" v-model="form.campaign.amountDiscount.threshold" class="border bporder-gray-300 px-3 py-1 w-full rounded-r">
+                        </div>
                   
+                      </div>
+                      <button>移除</button>
                     </div>
-                    <button>移除</button>
+                    <p class="text-sm text-gray-600">填寫的數字必須大於0。例:20代表減$20；70代表減$70</p>
                   </div>
-                  <p class="text-sm text-gray-600">填寫的數字必須大於0。例:20代表減$20；70代表減$70</p>
                 </li>
               </ol>
             </transition>
@@ -606,7 +643,7 @@ watch(
                   </div>
                 </li>
                 <!--  選擇所有顧客-->
-                <li v-if="form.targetGroup.selectedGroup === 'all'" class="border-b border-gray-300 pb-4 space-y-3">
+                <!-- <li v-if="form.targetGroup.selectedGroup === 'all'" class="border-b border-gray-300 pb-4 space-y-3">
                     <h4>其他設定</h4>
                     <p>每位顧客最多使用次數</p>
                     <div class="flex space-x-2">
@@ -622,7 +659,7 @@ watch(
                         <p class="ml-6 text-sm text-gray-600">限尚未成立過訂單的顧客使用</p>
                       </div>
                     </div>
-                </li>
+                </li> -->
                 <!-- 選擇會員 -->
                 <li v-if="form.targetGroup.selectedGroup === 'members'" class="border-b border-gray-300 pb-4 space-y-3">
                     <h4>目標會員群組</h4>
@@ -674,7 +711,7 @@ watch(
                       </table>
                     </div>
                 </li>  
-                <li v-if="form.targetGroup.selectedGroup === 'members'" class="space-y-3">
+                <!-- <li v-if="form.targetGroup.selectedGroup === 'members'" class="space-y-3">
                     <h4>其他設定</h4>
                     <p>每位顧客最多使用次數</p>
                     <div class="flex space-x-2">
@@ -686,7 +723,7 @@ watch(
                         <input type="radio" id="LimitedOne" value="LimitedOne" v-model="form.targetGroup.usageLimit" name="frequency">
                         <label for="LimitedOne">每位會員限用優惠一次</label>
                       </div>
-                      <div >
+                      <div>
                         <div class="space-x-2">
                           <input type="radio" id="First" value="First" v-model="form.targetGroup.usageLimit" name="frequency">
                           <label for="First">限首次購買</label>
@@ -694,7 +731,7 @@ watch(
                         <p class="ml-6 text-sm text-gray-600">限尚未成立過訂單的顧客使用</p>
                       </div>
                     </div>
-                </li>
+                </li>  -->
                 <!-- 選擇指定顧客標籤 -->
                   <li v-if="form.targetGroup.selectedGroup === 'tagged'" class="border-b border-gray-300 pb-4 space-y-3">
                     <h4>顧客標籤</h4>
@@ -738,7 +775,7 @@ watch(
                       </tbody>
                     </table>
                   </li>
-                  <li v-if="form.targetGroup.selectedGroup === 'tagged'" class="border-b border-gray-300 pb-4 space-y-3">
+                  <!-- <li v-if="form.targetGroup.selectedGroup === 'tagged'" class="border-b border-gray-300 pb-4 space-y-3">
                     <h4>其他設定</h4>
                     <p>每位顧客最多使用次數</p>
                     <div class="flex space-x-2">
@@ -758,7 +795,7 @@ watch(
                         <p class="ml-6 text-sm text-gray-600">限尚未成立過訂單的顧客使用</p>
                       </div>
                     </div>
-                  </li>
+                  </li> -->
               </ol>
             </transition>
            
@@ -791,11 +828,24 @@ watch(
                   <h4>優惠卷使用上限</h4>
                   <p>優惠卷可使用次數</p>
                   <div class="flex w-40">
-                    <input type="text" id="usagelimit" value="usagelimit" v-model="form.promotion.automatic.usageLimit" class="border border-gray-300 px-3 py-1 w-full rounded-l">
+                    <input 
+                      type="text" 
+                      id="usagelimit" 
+                      value="usagelimit" 
+                      v-model="form.promotion.automatic.usageLimit" 
+                      :disabled="form.promotion.automatic.unlimited"
+                      class="border border-gray-300 px-3 py-1 w-full rounded-l"
+                    >
                     <label for="usagelimit" class="border border-l-0 border-gray-300 bg-gray-100 px-3 py-1 flex items-center text-gray-600 rounded-r">次</label>
                   </div>
                   <div class="space-x-2">
-                    <input type="checkbox" id="unlimited" value="unlimited" v-model="form.promotion.automatic.unlimited">
+                    <input 
+                      type="checkbox" 
+                      id="unlimited" 
+                      value="unlimited" 
+                      v-model="form.promotion.automatic.unlimited"
+                      :disabled="form.promotion.automatic.usageLimit !== ''"
+                    >
                     <label for="unlimited">無限</label>
                   </div>
                 </li>
@@ -804,13 +854,13 @@ watch(
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
                       <p>促銷開始時間</p>
-                      <input type="date" value="StartDate" v-model="form.promotion.automatic.startDate" class="w-40">
+                      <input type="date" value="StartDate" v-model="form.promotion.automatic.promotionStartDate" class="w-40">
                     </div>
                     <div>
                       <p>促銷結束時間</p>
-                      <input type="date" value="EndDate" v-model="form.promotion.automatic.endDate" class="w-40">
+                      <input type="date" value="EndDate" v-model="form.promotion.automatic.promotionEndDate" class="w-40">
                       <div class="space-x-2">
-                        <input type="checkbox" id="NeverExpires" value="NeverExpires" v-model="form.promotion.automatic.neverExpires">
+                        <input type="checkbox" id="NeverExpires" value="NeverExpires" v-model="form.promotion.automatic.neverExpiresPromotion">
                         <label for="NeverExpires">永不過期</label>
                       </div>  
                     </div>
@@ -821,21 +871,21 @@ watch(
                   <h4>優惠卷領取方式</h4>
                   <div>
                     <div class="space-x-2">
-                      <input type="radio" id="InCenter" value="InCenter" v-model="form.promotion.useCoupons.selectedHowToReceive" name="GetCoupons">
+                      <input type="radio" id="InCenter" value="InCenter" v-model="form.promotion.useCoupons.selectedReceiveMethod" name="GetCoupons">
                       <label for="InCenter">顯示在領卷中心</label>
                     </div>  
                     <p class="ml-6 text-sm text-gray-600">顧客可直接在網店前台的領卷中心領取，此優惠卷限領取和使用一次</p>
                   </div>
                   <div>
                     <div class="space-x-2">
-                      <input type="radio" id="EnterCouponCode" value="EnterCouponCode" v-model="form.promotion.useCoupons.selectedHowToReceive" name="GetCoupons">
+                      <input type="radio" id="EnterCouponCode" value="EnterCouponCode" v-model="form.promotion.useCoupons.selectedReceiveMethod" name="GetCoupons">
                       <label for="EnterCouponCode">輸入優惠卷代碼領取</label>
                     </div>
                     <p class="ml-6 text-sm text-gray-600">顧客可在網店前台的領卷中心和會員中心輸入代碼後領取，亦支援顧客在結帳時直接輸入代碼套用</p>
                   </div>
                   <div >
                     <div class="space-x-2">
-                      <input type="radio" id="GetCoupons" value="GetCoupons" v-model="form.promotion.useCoupons.selectedHowToReceive" name="GetCoupons">
+                      <input type="radio" id="GetCoupons" value="GetCoupons" v-model="form.promotion.useCoupons.selectedReceiveMethod" name="GetCoupons">
                       <label for="GetCoupons">透過連結或顧客分群發送(領取型優惠卷)</label>
                     </div>
                     <p class="ml-6 text-sm text-gray-600">建立優惠卷連結後，顧客點擊後登入即可領取(每位會員限領取與使用一次)；亦可使用顧客分群發送優惠卷，直接將優惠卷歸戶至顧客身上</p>
@@ -846,28 +896,68 @@ watch(
                   <h4>優惠卷使用上限</h4>
                   <p>優惠卷可使用次數</p>
                   <div class="flex w-40">
-                    <input type="text" v-model="form.promotion.recommended.usageLimit" class="border border-gray-300 px-3 py-1 w-full rounded-l">
+                    <input 
+                      type="text" 
+                      v-model="form.promotion.recommended.usageLimit" 
+                      :disabled="form.promotion.recommended.unlimited"
+                      class="border border-gray-300 px-3 py-1 w-full rounded-l"
+                    >
                     <label class="border border-l-0 border-gray-300 bg-gray-100 px-3 py-1 flex items-center text-gray-600 rounded-r">次</label>
                   </div>
                   <div class="space-x-2">
-                    <input type="checkbox" id="unlimited" v-model="form.promotion.recommended.unlimited">
+                    <input 
+                      type="checkbox" 
+                      id="unlimited" 
+                      v-model="form.promotion.recommended.unlimited"
+                      :disabled="form.promotion.recommended.usageLimit !== ''"
+                    >
                     <label for="unlimited">無限</label>
                   </div>  
                 </li>
                 <!-- 選擇顯示在領卷中心 -->
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                  <div class="space-y-2">
+                    <label class="block">領取限制：</label>
+                    <div v-for="option in receiveConditions" :key="option.value" class="space-x-2">
+                      <input
+                        type="checkbox"
+                        :id="option.value"
+                        :value="option.value"
+                        v-model="form.promotion.useCoupons.inCenter.customReceiveCondition"
+                        :disabled="isCustomConditionDisabled"
+                      >
+                      <label :for="option.value">{{ option.label }}</label>
+                      <p class="ml-6 text-sm text-gray-600">{{ option.description }}</p>
+                    </div>
+                  </div>
+
                   <h4>優惠卷使用上限</h4>
                   <p>優惠可領取次數</p>
                   <div class="flex w-40">
-                    <input type="text" v-model="form.promotion.useCoupons.inCenter.usageLimit" class="border border-gray-300 px-3 py-1 w-full rounded-l">
+                    <input 
+                      type="text" 
+                      v-model="form.promotion.useCoupons.inCenter.usageLimit" 
+                      class="border border-gray-300 px-3 py-1 w-full rounded-l"
+                      :disabled="isUsageLimitDisabled"
+                      >
                     <label class="border border-l-0 border-gray-300 bg-gray-100 px-3 py-1 flex items-center text-gray-600 rounded-r">次</label>
                   </div>
                   <div class="space-x-2">
-                    <input type="checkbox" id="unlimited" v-model="form.promotion.useCoupons.inCenter.unlimited">
+                    <input 
+                      type="checkbox" 
+                      id="unlimited" 
+                      v-model="form.promotion.useCoupons.inCenter.unlimited"
+                      :disabled="isUnlimitedDisabled"
+                      >
                     <label for="unlimited">無限</label>
                   </div>
+                  <!-- new -->
+                  <div class="md:w-1/2 space-y-2">
+                    <label class="block">輸入代碼</label>
+                    <input type="text" v-model="form.promotion.useCoupons.inCenter.code" class="w-40 border border-gray-300 px-3 py-1 rounded" placeholder="例如:Happy慶新年888">
+                  </div> 
                 </li>
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                   <h4>顯示在領卷中心</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -884,7 +974,7 @@ watch(
                     </div>
                   </div>
                 </li>
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                   <h4>促銷限制</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -902,7 +992,7 @@ watch(
                   </div>
                 </li>
                 <!-- 選擇輸入優惠卷代碼領取 -->
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                   <h4>優惠卷代碼與使用上限</h4>
   
                   <!-- 單組通用代碼 -->
@@ -919,21 +1009,29 @@ watch(
                       <label class="block">輸入代碼</label>
                       <input type="text" v-model="form.promotion.useCoupons.enterCouponCode.universal.code" class="w-40 border border-gray-300 px-3 py-1 rounded" placeholder="例如:Happy慶新年888">
       
-                      <div class="space-x-2">
+                      <!-- <div class="space-x-2">
                         <input type="checkbox" v-model="form.promotion.useCoupons.enterCouponCode.universal.showInMemberCenter">
                         <label>於網店會員中心顯示優惠卷</label>
-                      </div>
+                      </div> -->
                     </div>
 
                     <div class="md:w-1/2 space-y-2">
                       <label class="block">優惠可使用次數</label>
                       <div class="flex">
-                        <input type="number" v-model.number="form.promotion.useCoupons.enterCouponCode.universal.usageLimit" class="border border-gray-300 px-3 py-1 w-40 rounded-l">
+                        <input 
+                          type="number" 
+                          v-model.number="form.promotion.useCoupons.enterCouponCode.universal.usageLimit"
+                          :disabled="form.promotion.useCoupons.enterCouponCode.universal.unlimited" 
+                          class="border border-gray-300 px-3 py-1 w-40 rounded-l">
                         <span class="border border-gray-300 border-l-0 bg-gray-100 px-3 py-1 flex items-center rounded-r text-gray-600">次</span>
                       </div>
 
                       <div class="space-x-2">
-                        <input type="checkbox" v-model="form.promotion.useCoupons.enterCouponCode.universal.unlimited">
+                        <input 
+                          type="checkbox" 
+                          v-model="form.promotion.useCoupons.enterCouponCode.universal.unlimited"
+                          :disabled="form.promotion.useCoupons.enterCouponCode.universal.usageLimit !==''"
+                        >
                         <label>無限</label>
                       </div>
                     </div>
@@ -954,7 +1052,7 @@ watch(
                   </div>
                 </li>
                 <!--領卷中心（針對單組通用代碼） -->
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons' && form.promotion.useCoupons.enterCouponCode.selectedCodeType === 'Universal'" class="space-y-3">  
+                <!-- <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons' && form.promotion.useCoupons.enterCouponCode.selectedCodeType === 'Universal'" class="space-y-3">  
                   <h4>顯示在領卷中心</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -970,9 +1068,9 @@ watch(
                       </div>  
                     </div>
                   </div>
-                </li>
+                </li> -->
                 <!-- 領卷中心（針對多組獨立代碼） -->
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons' && form.promotion.useCoupons.enterCouponCode.selectedCodeType === 'Independent'" class="space-y-3">  
+                <!-- <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons' && form.promotion.useCoupons.enterCouponCode.selectedCodeType === 'Independent'" class="space-y-3">  
                   <h4>顯示在領卷中心</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -988,9 +1086,9 @@ watch(
                       </div>  
                     </div>
                   </div>
-                </li>
+                </li> -->
                 <!-- 促銷限制（單組通用代碼） -->
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons' && form.promotion.useCoupons.enterCouponCode.selectedCodeType === 'Universal'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons' && form.promotion.useCoupons.enterCouponCode.selectedCodeType === 'Universal'" class="space-y-3">
                   <h4>促銷限制</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -1008,7 +1106,7 @@ watch(
                   </div>
                 </li>
                 <!-- 促銷限制（多組獨立代碼） -->
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons' && form.promotion.useCoupons.enterCouponCode.selectedCodeType === 'Independent'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'EnterCouponCode' && form.promotion.selectedMethod === 'UseCoupons' && form.promotion.useCoupons.enterCouponCode.selectedCodeType === 'Independent'" class="space-y-3">
                   <h4>促銷限制</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -1027,22 +1125,32 @@ watch(
                 </li>
 
                 <!-- 選擇透過連結或顧客分群發送 -->
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'GetCoupons' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'GetCoupons' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                     <h4>優惠卷使用上限</h4>
                     <p>優惠卷可使用次數</p>
                     <div class="flex w-40">
-                      <input type="text" v-model="form.promotion.useCoupons.getCoupons.usageLimit" class="border border-gray-300 px-3 py-1 w-full rounded-l">
+                      <input 
+                        type="text" 
+                        v-model="form.promotion.useCoupons.getCoupons.usageLimit" 
+                        :disabled="form.promotion.useCoupons.getCoupons.unlimited"
+                        class="border border-gray-300 px-3 py-1 w-full rounded-l"
+                      >
                       <label class="border border-l-0 border-gray-300 bg-gray-100 px-3 py-1 flex items-center text-gray-600 rounded-r">次</label>
                     </div>
                     <div class="space-x-2">
-                      <input type="checkbox" id="unlimited" v-model="form.promotion.useCoupons.getCoupons.unlimited">
+                      <input 
+                        type="checkbox" 
+                        id="unlimited" 
+                        v-model="form.promotion.useCoupons.getCoupons.unlimited"
+                        :disabled="form.promotion.useCoupons.getCoupons.usageLimit !== ''"
+                      >
                       <label for="unlimited">無限</label>
                     </div>
 
                     <h4>優惠卷連結</h4>
                     <p class="text-sm text-gray-600">尚未建立領取連結，於活動建立成功後產生</p>
                 </li>
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'GetCoupons' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'GetCoupons' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                   <h4>顯示在領卷中心</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -1059,7 +1167,7 @@ watch(
                     </div>
                   </div>
                 </li>
-                <li v-if="form.promotion.useCoupons.selectedHowToReceive === 'GetCoupons' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'GetCoupons' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                   <h4>促銷限制</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -1079,13 +1187,13 @@ watch(
                   
               </ol>
             </transition>
-            <!--  -->
-             <button
+            
+             <!-- <button
               @click="submitForm(form)"
               class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
             >
             {{ isEditing ? '送出編輯' : '送出新增' }}
-            </button>
+            </button> -->
           </div>
           <!-- Accordion 4.付款及送貨方式 -->
           <div>
@@ -1131,6 +1239,13 @@ watch(
                 </div>
               </div>                                                    
             </transition>
+             <!--  -->
+             <button
+              @click="submitForm(form)"
+              class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            >
+            {{ isEditing ? '送出編輯' : '送出新增' }}
+            </button>
           </div>
         <!-- </form> -->
       </div>

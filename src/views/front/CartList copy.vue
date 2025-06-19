@@ -103,9 +103,33 @@ export default {
          返回商店
         </router-link>
       </div>
-      <!-- 商品列表 -->
+      <!-- 付款方式 + 商品列表 -->
       <div v-else class="space-y-8">
-          <!-- 商品列表-->
+          <!-- 付款方式 -->
+          <div class="border bg-white p-6 shadow rounded">
+            <!-- <h2 class="text-gray-600 text-lg font-semibold mb-4">選擇付款方式</h2> -->
+  
+            <div class="space-y-4">
+              <!-- <label v-for="method in paymentStore.paymentMethods" :key="method.value"class="flex items-center space-x-3 cursor-pointer"> -->
+                <!--@change 當選擇付款方式時，將值設為 selectedMethod -->
+                
+                <!-- <input 
+                  type="radio" 
+                  name="payment" 
+                  class="w-4 h-4 border-gray-300 accent-blue-500"
+                  :value="method.value" 
+                  v-model="paymentStore.selectedPayment"
+                > -->
+                <!-- <div class="flex flex-col flex-grow">
+                  <span class="font-medium">{{ method.name }}</span>
+                  <span class="text-gray-500 text-sm">{{ method.description }}</span>
+                </div>
+                <img v-if="method.logo" :src="method.logo" :alt="method.name" class="w-10 h-10">
+              </label> -->
+            </div>
+          </div>
+        
+          <!-- 商品列表 v-else-->
           <div  class="border flex flex-col lg:flex-row lg:space-x-8  ">
             <!-- 商品列表 lg:w-2/3-->
             <div class="w-full  bg-white p-6 rounded-lg shadow-md">

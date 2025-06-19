@@ -13,8 +13,8 @@ export default {
         password: "",
         phone:"",
         birthday:"",
-        type:'member',
-        role:'member',
+        type:'member',//general or vip or vvip
+        role:'member',//admin or member
         last_login:'',
       },
       showPassword: false,

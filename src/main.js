@@ -37,6 +37,7 @@ import Admins from './views/admin/UserManagement/Admins.vue'
 import Members from './views/admin/UserManagement/Members.vue'
 import MarketingManagement from './views/admin/MarketingManagement/MarketingManagement.vue'
 import CouponAdmin from './views/admin/MarketingManagement/CouponAdmin.vue'
+import FreeShippingAdmin from './views/admin/MarketingManagement/FreeShippingAdmin.vue'
 
 import CartList from './views/front/CartList.vue'
 import PayList from './views/front/PayList.vue'
@@ -45,12 +46,12 @@ import AccountOrderDetails from './views/front/AccountOrderDetails.vue'
 import CreditPayPage from './views/front/CreditPayPage.vue'
 // import AdminOrderDetail from './views/admin/OrdersManagement/AdminOrderDetail.vue'
 
-import test2 from './views/front/test2.vue'
 import test3 from './views/front/test3.vue'
 import test4 from './views/front/test4.vue'
-import test5 from './views/front/test5.vue'
+
 
 import AddCouponModal from './components/AddCouponModal.vue'
+import { comment } from 'postcss'
 
 
 const routes = [
@@ -66,11 +67,7 @@ const routes = [
                 name:'AddCouponModal',
                 component:AddCouponModal
             },
-            {
-                path:'test2',
-                name:'test2',
-                component:test2
-            },
+           
             {
                 path:'test3',
                 name:'test3',
@@ -81,11 +78,7 @@ const routes = [
                 name:'test4',
                 component:test4
             },
-             {
-                path:'test5',
-                name:'test5',
-                component:test5
-            },
+           
             {
                 path:'',
                 name:'Home',
@@ -279,6 +272,12 @@ const routes = [
                                 name:'CouponAdmin',
                                 component:CouponAdmin,
                             },
+                            {
+                                path:'freeshipping',
+                                name:'FreeShippingAdmin',
+                                component:FreeShippingAdmin,
+                            },
+
                         ]
                     },
 

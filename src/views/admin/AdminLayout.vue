@@ -127,11 +127,24 @@ export default{
             <li>
               <router-link 
                 to="/admin/marketing/coupons"
-                class="block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700"
-                :class="{'bg-orange-200 font-bold':isActive('/admin/marketing/coupons')}"
+                :class="[
+                  'block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700',
+                  isActive('/admin/marketing/coupons') ? 'bg-orange-200 font-bold' : ''
+                ]"
               >
                 滿額滿件優惠
               </router-link>         
+            </li>
+            <li>
+              <router-link
+                to="/admin/marketing/freeshipping"
+                :class="[
+                  'block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700',
+                  isActive('/admin/marketing/freeshipping') ? 'bg-orange-200 font-bold' : ''
+                ]"
+              >
+                免運費
+              </router-link>
             </li>
           </ul>
         </div>

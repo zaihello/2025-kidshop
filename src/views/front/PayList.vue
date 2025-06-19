@@ -1,6 +1,5 @@
 
 <script>
-
 import CartNavbar from '../../components/front/CartNavbar.vue'
 import { useCartStore } from '../../stores/cartStore'
 import { usePaymentStore } from '../../stores/paymentStore'
@@ -130,6 +129,9 @@ export default {
         maximumFractionDigits: 2,
       }).format(value);
     },
+    isEligible(coupon){
+      return !coupon.threshold || this.cartStore.totalAmount >= coupon.threshold
+    }
  
   },
   
@@ -218,13 +220,38 @@ export default {
                   共 <span class="text-red-500 font-bold">{{ cartStore.selectedItemsCount }}</span> 件商品 商品總價
                 </span>
                 <span class="font-semibold tracking-wide">
-                  {{ formatCurrency(cartStore.totalAmount) }}
+                  <!-- {{ formatCurrency(cartStore.totalAmount) }} -->
+                  {{ formatCurrency(cartStore.cartItems.total) }}
                 </span>
               </div>
             </div>
-
-            <!-- 免運提示與運費 -->
+            <!-- 優惠卷 class="flex justify-end"-->
+            <div v-if="cartStore.cartItems?.couponCode && isEligible(cartStore.cartItems.couponCode)" class="flex justify-end">
+              <div class="w-full max-w-sm flex justify-between items-center text-red-500">
+                <span>
+                  折價卷 滿 {{ cartStore.cartItems.couponCode.threshold}}折{{cartStore.cartItems.couponCode.discount}}
+                </span>
+                <span class="font-semibold tracking-wide">
+                  -{{ formatCurrency(cartStore.cartItems.couponCode.discount) }}
+                </span>
+              </div>
+            </div> 
+            <!-- 運費 -->
             <div class="flex justify-end">
+              <div class="w-full max-w-sm flex justify-between items-center">
+                <span>運費總金額</span>
+                <span>{{ formatCurrency(cartStore.cartItems.freight) }}</span>
+              </div>
+            </div>
+            <!-- 免運卷 -->
+            <div v-if="cartStore.cartItems.freeShipping && isEligible(cartStore.cartItems.freeShipping)" class="flex justify-end">
+              <div class="w-full max-w-sm flex justify-between items-center text-red-500">
+                <span>運費折抵 滿 {{ cartStore.cartItems.freeShipping.threshold }} 折 {{ cartStore.cartItems.freeShipping.discount }}</span>
+                <span>-{{ formatCurrency(cartStore.cartItems.freeShipping.discount) }}</span>
+              </div>
+            </div>
+            <!-- 免運提示與運費 -->
+            <!-- <div class="flex justify-end">
               <div class="w-full max-w-sm flex justify-between items-center">
                 <div class="flex items-center gap-2">
                   <span
@@ -245,7 +272,7 @@ export default {
                   {{ formatCurrency(paymentStore.shippingFee) }}
                 </span>
               </div>
-            </div>
+            </div> -->
 
             <!-- 分隔虛線 (短版) -->
             <div class="flex justify-end">
@@ -256,7 +283,8 @@ export default {
             <div class="flex justify-end">
               <div class="w-full max-w-sm flex justify-between items-center font-bold text-lg">
                 <span>總付款金額</span>
-                <span class="text-red-600">{{ formatCurrency(cartStore.finalTotal) }}</span>
+                <!-- <span class="text-red-600">{{ formatCurrency(cartStore.finalTotal) }}</span> -->
+                <span class="text-red-600">{{ formatCurrency(cartStore.cartItems.final_total) }}</span>
               </div>
             </div>
           </div>
@@ -581,7 +609,7 @@ export default {
         <button 
           type="submit"
           class="px-6 md:px-32 py-3 md:py-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-          >支付${{ cartStore.finalTotal.toLocaleString() }}</button>
+          >支付${{ cartStore.cartItems.final_total.toLocaleString() }}</button>
       </div>
     </Form>
   </div>  

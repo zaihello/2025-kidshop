@@ -1,51 +1,49 @@
 <script setup>
 import { ref,reactive,watch, onMounted } from 'vue'
 import axios from 'axios'
-import AddCouponModal from '../../../components/AddCouponModal.vue' 
+import FreeShippingModal from '../../../components/FreeShippingModal.vue' 
 
 const showModal = ref(false)
-const coupons = ref([]) // 優惠券列表
-const currentCoupon = ref(null) // 編輯用
+const freeshippings = ref([])// 免運卷列表
+const currentFreeShipping = ref(null)// 編輯用
 const isEditing = ref(false)// 預設為新增模式
 
-// 取得優惠券列表
-const getCoupons = async() => {
-  const res = await axios.get('https://204ed3432b06d7af.mokky.dev/coupons');
-  coupons.value = res.data;
+//取得免運卷列表
+const getFreeShippings = async() => {
+  const { data } = await axios.get('https://204ed3432b06d7af.mokky.dev/freeshippings')
+  freeshippings.value = data
 }
 // 開啟新增 modal
 const openAddModal = () => {
-  currentCoupon.value = null;
+  currentFreeShipping.value = null;
   isEditing.value = false
   showModal.value = true;
 }
-// 編輯優惠券
-const editCoupon = (coupon) => {
-  currentCoupon.value = coupon
-  // currentCoupon.value = JSON.parse(JSON.stringify(coupon))
+//編輯免運費
+const editFreeShipping = (freeshipping) => {
+  currentFreeShipping.value = freeshipping
   isEditing.value = true
-  showModal.value = true;
-  console.log('523',coupon)
-}
-// 刪除優惠券
-const deleteCoupon = async(id) => {
-  if (confirm('確定刪除這張優惠券？')) {
-    await axios.delete(`https://204ed3432b06d7af.mokky.dev/coupons/${id}`);
-    await getCoupons();// 重新取得資料
+  showModal.value = true
+} 
+
+//刪除免運費
+const deleteFreeShipping = async(id) => {
+  if(confirm('確定刪除這張免運費卷？')) {
+    await axios.delete(`https://204ed3432b06d7af.mokky.dev/freeshippings/${id}`)
+    await getFreeShippings()// 重新取得資料
   }
 }
+
 // 處理新增或編輯提交
-const handleCouponSubmit = async({ mode, payload}) => {
-  console.log('父元件收到的優惠券資料:', payload); 
+const handleFreeShippingSubmit = async ({ mode,payload}) => {
   if(mode === 'edit'){
     //編輯
-    await axios.patch(`https://204ed3432b06d7af.mokky.dev/coupons/${payload.id}`,payload)
+    await axios.patch(`https://204ed3432b06d7af.mokky.dev/freeshippings/${payload.id}`,payload)
   }else if(mode === 'add'){
-    //新增
-    await axios.post(`https://204ed3432b06d7af.mokky.dev/coupons/`,payload)
+    await axios.post(`https://204ed3432b06d7af.mokky.dev/freeshippings/`,payload)
   }
   showModal.value = false
-  await getCoupons()// 重新取得資料
+  await getFreeShippings() // 重新取得資料
 }
 
 const getApplyToLabel = (applyTo) => {
@@ -140,13 +138,13 @@ const getPromotionPeriodLabel = (promotion) => {
   return '未設定'
 }
 // 初次載入資料
-onMounted(getCoupons)
+onMounted(getFreeShippings)
 
 </script>
 
 <template>
 <div>  
-  <h1 class="text-2xl font-bold mb-6 text-center">滿額滿件優惠</h1>
+  <h1 class="text-2xl font-bold mb-6 text-center">免運費</h1>
   <div class="mb-4 flex justify-end">
     <button @click="openAddModal" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow">新增</button>
   </div>
@@ -165,27 +163,27 @@ onMounted(getCoupons)
       </tr>
     </thead>
     <tbody >
-      <tr v-for="coupon in coupons" :key="coupon.id" class="border hover:bg-gray-50">
-        <td class="py-4">{{ coupon.campaign.basic.campaignTitle || '—' }}</td>
+      <tr v-for="freeshipping in freeshippings" :key="freeshipping.id" class="border hover:bg-gray-50">
+        <td class="py-4">{{ freeshipping.campaign.basic.campaignTitle || '—' }}</td>
         <!-- <td class="py-4">網店</td> -->
-        <td class="py-4">{{ getApplyToLabel(coupon.campaign.basic.applyTo) }}</td>
+        <td class="py-4">{{ getApplyToLabel(freeshipping.campaign.basic.applyTo) }}</td>
         <!-- <td class="py-4">
           {{ coupon.promotion.useCoupons.enterCouponCode.promotionStartDate || '未設定' }} 至
           <span v-if="coupon.promotion.useCoupons.enterCouponCode.promotionEndDate">{{ coupon.promotion.useCoupons.enterCouponCode.promotionEndDate || '未設定' }}</span>
           <span v-else>永不過期</span>
         </td> -->
         <td class="py-4">
-          {{ getPromotionPeriodLabel(coupon.promotion) }}
+          {{ getPromotionPeriodLabel(freeshipping.promotion) }}
         </td>
-        <td class="py-4">{{ getSelectedGroupLabel(coupon.targetGroup.selectedGroup) }}</td>
-        <td class="py-4">{{ getSelectedMethodLabel(coupon.promotion.selectedMethod) }}</td>
+        <td class="py-4">{{ getSelectedGroupLabel(freeshipping.targetGroup.selectedGroup) }}</td>
+        <td class="py-4">{{ getSelectedMethodLabel(freeshipping.promotion.selectedMethod) }}</td>
         <td class="py-4">
           <!-- 0 || 無限使用 -->
-           {{ getUsageLimitLabel(coupon) }}
+           {{ getUsageLimitLabel(freeshipping) }}
         </td>
         <td class="py-4">
-          <button @click="editCoupon(coupon)" class="border bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded shadow">編輯</button>
-          <button @click="deleteCoupon(coupon.id)" class="border bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded shadow">刪除</button>
+          <button @click="editFreeShipping(freeshipping)" class="border bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded shadow">編輯</button>
+          <button @click="deleteFreeShipping(freeshipping.id)" class="border bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded shadow">刪除</button>
         </td>
         
       </tr>
@@ -193,10 +191,10 @@ onMounted(getCoupons)
   </table>
   <!-- Modal -->
   <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-    <AddCouponModal
-     :couponData="currentCoupon"
+    <FreeShippingModal
+     :freeshippingData="currentFreeShipping"
      :is-editing="isEditing"
-     @submitCoupon="handleCouponSubmit"
+     @submitFreeShipping="handleFreeShippingSubmit"
      @close="showModal=false"  
     />
   </div> 

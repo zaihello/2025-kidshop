@@ -9,7 +9,8 @@ import { useWishlistStore } from './wishlistStore'
 //auth
 export const useAuthStore = defineStore('authStore', {
   state: () => ({
-    user:null,//註冊用
+    // user:null,//註冊用
+    user:JSON.parse(localStorage.getItem('userData')) || null,
     token: localStorage.getItem('userToken') || '', // 從 localStorage 初始化 token
     role: localStorage.getItem('userRole') || '',
     id: Number(localStorage.getItem('userId')) || 0,//localStorage.getItem() 總是返回字串或 null 加上 Number
@@ -29,6 +30,9 @@ export const useAuthStore = defineStore('authStore', {
       localStorage.setItem('userToken', token);
       localStorage.setItem('userRole', user.role);
       localStorage.setItem('userId', user.id); // 儲存 userId
+      localStorage.setItem('userData',JSON.stringify(user))
+
+      console.log('設定user:',user)
     },
     clearAuth() {
       const cartStore = useCartStore()

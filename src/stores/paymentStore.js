@@ -1,14 +1,16 @@
 //付款方式 只有信用卡、到貨付款  ok 
 import { defineStore } from 'pinia'
-import { useCartStore } from '../stores/cartStore'
+import { useCartStore } from './cartStore'
 import { useAuthStore } from './authStore'
+import { useCouponStore } from './couponStore'
 import axios from 'axios'
 import { nextTick } from 'vue'
+import { markUserCouponAsUsed } from '../utils/couponUtils'
+import axiosInstance from '../services/axiosInstance'
 
 export const usePaymentStore =defineStore("payment",{
     state:() =>({
         selectedPayment: "credit", // // 使用者選擇的付款方式 預設選中 信用卡
-        freeShippingThreshold: 1000, // 🚛 免運門檻
         //付款方式
         paymentMethods: [
             {
@@ -16,40 +18,35 @@ export const usePaymentStore =defineStore("payment",{
               name: "7-11 - 取貨付款",
               description: "7-11：消費滿 1000 免運費，未滿酌收 50 元物流費。",
               logo: "7-11.png",
-              freeShippingThreshold: 1000, // 🚛 免運門檻
-              shippingFee: 50 // 📦 未達免運的運費
+            
             },
             {
               value: "familymart",
               name: "全家 - 取貨付款",
               description: "全家：消費滿 1000 免運費，未滿酌收 50 元物流費。",
               logo: "familymart.png",
-              freeShippingThreshold: 1000, // 🚛 免運門檻
-              shippingFee: 50 // 📦 未達免運的運費
+             
             },
             {
               value: "cod",
               name: "貨到付款",
               description: "宅配：消費滿 1000 免運費，未滿酌收 60 元物流費。",
               logo: "",
-              freeShippingThreshold: 1000, // 🚛 免運門檻
-              shippingFee: 60 // 📦 未達免運的運費
+             
             },
             {
               value: "credit",
               name: "信用卡線上付款",
               description: "宅配：消費滿 1000 免運費，未滿酌收 60 元物流費。",
               logo: "",
-              freeShippingThreshold: 1000, // 🚛 免運門檻
-              shippingFee: 60 // 📦 未達免運的運費
+             
             },
             {
               value: "linepay",
               name: "LINE Pay",
               description: "(可用 LINE Points 折抵) 宅配：消費滿 1000 免運費，未滿酌收 60 元物流費。",
               logo: "",
-              freeShippingThreshold: 1000, // 🚛 免運門檻
-              shippingFee: 60 // 📦 未達免運的運費
+             
             }
         ],
         //填寫表單資料
@@ -115,28 +112,47 @@ export const usePaymentStore =defineStore("payment",{
             左營區: '813',
           },
         },
+        selectedDiscountCouponId: null, // 折價券
+        selectedFreeShippingCouponId: null, // 免運券
+
     }),
     getters:{
         //選擇付款方式 (selectedMethod 是通過 getter 計算出來的，它依賴 selectedPayment，所以你只需要更新 selectedPayment，不需要手動設置 selectedMethod。)
         selectedMethod(state) {
             return state.paymentMethods.find(m => m.value === state.selectedPayment) || null;
         },
-        //運費 考慮總金額免運問題、選擇支付的方式
-        shippingFee() {
-            const cartStore = useCartStore();
-            const totalAmount = cartStore.totalAmount;// 只計算 selected: true 的商品總額
-            // 當 totalAmount 為 0（即沒有勾選商品），運費為 0
-            if (totalAmount === 0) {
-                return 0;
-            }
-            return totalAmount >= this.selectedMethod.freeShippingThreshold ? 0 : this.selectedMethod.shippingFee;
+        // 原始運費（你可根據邏輯設為固定值 60）
+        originalShippingFee(){
+          const cartStore = useCartStore()
+          const totalAmount = cartStore.totalAmount
+          if(totalAmount === 0) return 0
+          return 60
         },
+        // 折抵多少（根據免運券）
+        shippingDiscountAmount(){
+          const cartStore = useCartStore()
+          const couponStore = useCouponStore()
+          const totalAmount = cartStore.totalAmount
+
+          const coupon = couponStore.appliedFreeeShippingCoupon
+          if(coupon && totalAmount >= coupon.threshold){
+            return Math.min(60, coupon.discount || 0) // 折最多 60 元   
+          }
+          return 0
+        },
+        // 最終運費
+        finalShippingFee(){
+          return Math.max(
+            this.originalShippingFee - this.shippingDiscountAmount,0
+          )
+        },
+        
         //還差多少免運  考慮總金額免運問題、選擇支付的方式
-        remainingForFreeShipping() {
-            const cartStore = useCartStore();
-            const totalAmount = cartStore.totalAmount;
-            return totalAmount >= this.selectedMethod.freeShippingThreshold ? 0 : this.selectedMethod.freeShippingThreshold - totalAmount;
-        },
+        // remainingForFreeShipping() {
+        //     const cartStore = useCartStore();
+        //     const totalAmount = cartStore.totalAmount;
+        //     return totalAmount >= this.selectedMethod.freeShippingThreshold ? 0 : this.selectedMethod.freeShippingThreshold - totalAmount;
+        // },
         //訂購人 全部的地址資訊
         getUserFullAddress() {
           const user = this.orderInfo.user_info;
@@ -201,10 +217,12 @@ export const usePaymentStore =defineStore("payment",{
             userId: authStore.id,
             status: "processing",//處理中
             // payment_status: "未付款",
-            total:cartStore.totalAmount,
-            shipping_fee:this.shippingFee,
-            final_price: cartStore.finalTotal,
-        
+            total:cartStore.cartItems.total,
+            couponCode:cartStore.cartItems.couponCode,
+            freight:this.originalShippingFee,
+            freeShipping:cartStore.cartItems.freeShipping,
+            final_price: cartStore.cartItems.final_total,
+
             user_info: {
               name: this.orderInfo.user_info.name,
               email: this.orderInfo.user_info.email,
@@ -249,6 +267,7 @@ export const usePaymentStore =defineStore("payment",{
         },
         //支付$按鈕
         async submitOrder(router) {
+          console.log('🧾 selectedCouponId:', this.selectedCouponId)
 
           const authStore = useAuthStore()
           const token = authStore.token;
@@ -274,12 +293,33 @@ export const usePaymentStore =defineStore("payment",{
               },
             });
             // console.log("✅ 訂單成功建立", data);
+            // ✅ 標記優惠券為已使用
+           
+            // 折價券
+            if(this.selectedDiscountCouponId){
+              await markUserCouponAsUsed({
+                userId,
+                couponId:this.selectedDiscountCouponId,
+                type:'discount',
+                axiosInstance
+              })
+            }
+
+            //免運卷
+            if(this.selectedFreeShippingCouponId){
+              await markUserCouponAsUsed({
+                userId,
+                couponId:this.selectedFreeShippingCouponId,
+                type:'freeShipping',
+                axiosInstance
+              })
+            }
 
             await cartStore.clearSelectedItems();//刪除在/cartsdata結帳的商品
             this.orderInfo = this.getDefaultOrderInfo(); // ✅ 清空表單資料
 
-            // 根據付款方式跳轉對應頁面
-    
+          
+          // 根據付款方式跳轉對應頁面
           if (this.selectedPayment === "linepay") {
             router.push(`/cart/paylist/line/${data.id}`);
           } else if (this.selectedPayment === "credit") {
@@ -295,7 +335,7 @@ export const usePaymentStore =defineStore("payment",{
             alert("訂單建立失敗，請稍後再試");
           }
         },
-        
+      
         //複製訂購人資料
         async copyUserInfo() {
           

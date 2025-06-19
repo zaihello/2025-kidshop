@@ -140,25 +140,46 @@ export default{
             <div class="flex justify-end">
               <div class="w-full max-w-sm flex justify-between items-center">
                 <span>
-                 商品總價
+                商品總價
                 </span>
                 <span class="font-semibold tracking-wide">
                   {{ formatCurrency(orderData.total) }}
                 </span>
               </div>
             </div>
-
+            <!-- 優惠卷 -->
+            <div class="flex justify-end text-red-500">
+              <div class="w-full max-w-sm flex justify-between items-center">
+                <span>
+                  折價卷 滿{{ orderData.couponCode.threshold }} 折 {{orderData.couponCode.discount}}
+                </span>
+                <span>
+                   -{{ formatCurrency(orderData.couponCode.discount) }}
+                </span>
+              </div>
+            </div>
             <!-- 運費 -->
-           <div class="flex justify-end"> 
+            <div class="flex justify-end"> 
               <div class="w-full max-w-sm flex justify-between items-center">
                 <span class="flex items-center gap-2">
-                  運費
+                  運費總金額
                 </span>
-                <span class="font-semibold tracking-wide text-red-600">
-                  ${{ orderData.shipping_fee }}
+                <span class="font-semibold tracking-wide ">
+                  {{ formatCurrency(orderData.freight) }}
                 </span>
               </div>
             </div> 
+            <!-- 免運卷 -->
+            <div v-if="orderData.freeShipping" class="flex justify-end text-red-500">
+              <div class="w-full max-w-sm flex justify-between items-center">
+                <span>
+                  運費折抵 滿{{ orderData.freeShipping.threshold }} 折 {{ orderData.freeShipping.discount }}
+                </span>
+                <span>
+                  -{{ formatCurrency(orderData.freeShipping.discount) }}
+                </span>
+              </div>
+            </div>
 
             <!-- 分隔虛線 (短版) -->
             <div class="flex justify-end">

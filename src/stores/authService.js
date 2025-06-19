@@ -24,9 +24,9 @@ export async function login(credentials) {
       const { token, data:user } = response.data;
       console.log('會員登入回應:',response.data)  
       
-      // **改用 `type` 判斷會員**
-      if(user.type === 'member'){
-        authStore.setAuthData(token, user);
+      // **改用 `role` 判斷會員**
+      if(user.role === 'member'){
+        authStore.setAuthData(token, user);//登入時設置 token 與 user 資訊
         console.log(`會員登入成功，ID: ${user.id}`);
         
         // 後台會員的last_login:取得當前台灣時間並格式化為 YYYY/MM/DD HH:mm
@@ -70,9 +70,9 @@ export async function adminLogin(credentials){
     const response = await axios.post(`${API_URL}/auth`, credentials);
     const { token, data: user } = response.data;
     console.log('管理員登入回應:', response.data);
-    // **改用 `type` 判斷管理員**
-    if (user.type === 'admin') {
-      adminAuthStore.setAuthData(token, user);
+    // **改用 `role` 判斷管理員**
+    if (user.role === 'admin') {
+      adminAuthStore.setAuthData(token, user);////登入時設置 token 與 user 資訊
       console.log(`管理員登入成功，ID: ${user.id}`);
       return response.data;
     } else {

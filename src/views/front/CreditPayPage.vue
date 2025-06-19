@@ -1,11 +1,13 @@
 <script>
 import { useAuthStore } from '../../stores/authStore'
+import { usePaymentStore } from '../../stores/paymentStore'
 import axios from 'axios'
 //VeeValidate 驗證
 import { Form, Field, ErrorMessage, defineRule, configure } from 'vee-validate'
 import { required, numeric, min,max, regex } from '@vee-validate/rules'
 //時間套件
 import dayjs from 'dayjs'
+
 
 // 定義驗證規則
 defineRule('required', required)
@@ -65,6 +67,11 @@ export default {
     console.log('Order ID:', this.orderId);
     this.generateCaptcha();
     this.getOrder()
+  },
+  computed:{
+    paymentStore(){
+      return usePaymentStore()
+    },
   },
   methods: {
     //該使用者該次訂單
@@ -238,7 +245,30 @@ addDays(date, days) {
 </script>
 
 <template >
-<div class="bg-stone-200 py-24 p-8">  
+<div class="bg-stone-200 py-24 p-8 space-y-14">   
+   <!-- 付款方式 -->
+  <div class="max-w-xl mx-auto bg-white shadow-lg rounded-xl px-6 py-12">
+    <h2 class="text-gray-600 text-lg font-semibold mb-4">選擇付款方式</h2>
+  
+    <div class="space-y-4">
+      <label v-for="method in paymentStore.paymentMethods" :key="method.value"class="flex items-center space-x-3 cursor-pointer"> 
+        <!--@change 當選擇付款方式時，將值設為 selectedMethod -->
+        <input 
+          type="radio" 
+          name="payment" 
+          class="w-4 h-4 border-gray-300 accent-blue-500"
+          :value="method.value" 
+          v-model="paymentStore.selectedPayment"
+        >
+        <div class="flex flex-col flex-grow">
+          <span class="font-medium">{{ method.name }}</span>
+          <span class="text-gray-500 text-sm">{{ method.description }}</span>
+        </div>
+        <img v-if="method.logo" :src="method.logo" :alt="method.name" class="w-10 h-10">
+      </label>
+    </div>
+  </div>  
+  <!-- 預設信用卡支付 -->
   <div v-if="orderData" class="max-w-xl mx-auto bg-white shadow-lg rounded-xl px-6 py-12">
     <h2 class="text-2xl font-semibold mb-4 text-center">信用卡付款</h2>
     <p class="mb-2">訂單編號： {{ orderId }}</p>

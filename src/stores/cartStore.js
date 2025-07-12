@@ -5,6 +5,8 @@ import { usePaymentStore } from './paymentStore'
 import { useCouponStore } from './couponStore'
 import axios from 'axios'
 import { watch } from 'vue'
+import { nextTick } from "vue";
+import { isFreeShippingUsable } from '../utils/freeShippingUtils'
 
 export const useCartStore = defineStore("cartStore",{
     state:() =>({
@@ -13,13 +15,14 @@ export const useCartStore = defineStore("cartStore",{
             userId: 0,//null
             items: [],
             total: 0,
-            couponCode:null,// ← 優惠券資料
+            coupon:null,// ← 優惠券資料
             freight:0,
             freeShipping:null,//免運卷
             final_total: 0,
             status: false,
             orderStatus: false,
         },
+        // isLoaded: false, // 🆕 控制是否完成載入 72
     }),
     getters:{
         // 計算使用者商品品項數量 
@@ -33,37 +36,47 @@ export const useCartStore = defineStore("cartStore",{
         //cartItems 的 selected 狀態改變(選擇商品)，selectAll 也會自動更新。
         selectAll() {
             return this.cartItems.items.length > 0 && this.cartItems.items.every(item => item.selected);
-        },
-        // 自動計算金額 計算已選取商品的總金額
+        },    
+         // 自動計算金額 計算已選取商品的總金額
         totalAmount(state){
             return state.cartItems.items
                 .filter(item => item.selected) // 只計算 selected: true 的商品
                 .reduce((sum, item) => sum + item.subTotal, 0);
         },
-        // 折價卷折扣金額 
+       
+        // 折價卷折扣金額 （自動根據 offerType 計算）只依據 cartItems.couponCode
         discountAmount(state){
-            const couponStore = useCouponStore()
-            const discountCoupon = couponStore.appliedDiscountCoupon
-            return discountCoupon ? discountCoupon.discount : 0
+            const coupon = state.cartItems.coupon
+            const total = state.cartItems.total
+
+            if(!coupon || total < coupon.threshold) return 0
+
+            if(coupon.offerType === 'percent'){
+                return Math.floor(total * (coupon.discount / 100))
+            }
+
+            // 預設為金額折扣
+            return coupon.discount
         },        
-        //自動計算金額(有 折價卷、免運卷 ) 計算最終應付金額（總金額 + 運費） 
+        //自動計算金額(有 折價卷、免運卷 ) 計算最終應付金額（總金額 - 折扣 + 運費 - 免運）
         finalTotal(state){
             const paymentStore = usePaymentStore();
-            return Math.max(0,this.totalAmount - this.discountAmount + paymentStore.finalShippingFee)
+            return Math.max(0,this.totalAmount - this.discountAmount + paymentStore.originalShippingFee - paymentStore.shippingDiscountAmount)
         },
         // 計算已勾選商品數量
         selectedItemsCount: (state) => {
             return state.cartItems.items.filter(item => item.selected).length;
         },
-        //勾選的商品
-        selectedtItems(state) {
+        
+        //已勾選的商品
+        selectedItems(state) {
             return state.cartItems.items.filter(item => item.selected);
         },
         
 
     },
     actions:{
-        //取得目前使用者的購物車  /cartsdata格式
+        //取得目前使用者的購物車  /cartsdata格式 原本
         async getCartData(){
             const authStore = useAuthStore();
             const userId = authStore.id;
@@ -75,6 +88,7 @@ export const useCartStore = defineStore("cartStore",{
             }
 
             try{
+                // this.isLoaded = false//72
                 const response = await axios.get(`https://204ed3432b06d7af.mokky.dev/cartsdata?userId=${userId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -90,7 +104,7 @@ export const useCartStore = defineStore("cartStore",{
                         userId,
                         items: [],
                         total: 0,
-                        couponCode:{},// ← 優惠券資料
+                        coupon:{},// ← 優惠券資料
                         freight:0,
                         freeShipping:null, 
                         final_total: 0,
@@ -101,12 +115,13 @@ export const useCartStore = defineStore("cartStore",{
                     console.log("API 無資料，自動重設購物車為空");
                   
                 }
-
+                // this.isLoaded = true//72
             }catch(error){
                 console.error("加載購物車失敗：", error);
             }
         },
-        
+
+     
         //商品詳細頁面的加入購物車功能 
         //相同使用者和商品更新新增到/cartsdata /carts
         //只同步剛剛加入的商品
@@ -180,8 +195,8 @@ export const useCartStore = defineStore("cartStore",{
                         userId,
                         items: [newItem],
                         freight:0,
-                        couponCode: couponStore.appliedDiscountCoupon?.code || null,
-                        freeShipping:couponStore.appliedFreeeShippingCoupon?.code || null,
+                        coupon: couponStore.appliedDiscountCoupon?.code || null,
+                        freeShipping:couponStore.appliedFreeShippingCoupon?.code || null,
                         status: false,
                         orderStatus: false,
                     };
@@ -222,6 +237,7 @@ export const useCartStore = defineStore("cartStore",{
                 subTotal: (product.price || product.OriginalPrice) * quantity,
                 product: {
                     id: product.id,
+                    categoryId:product.category_id,
                     name: product.name,
                     colors: selectedColorObj ? [selectedColorObj] : [],
                     variants: [selectedVariant],
@@ -274,14 +290,14 @@ export const useCartStore = defineStore("cartStore",{
             }
         },
     
-        //✅ 同步 /cartsdata（總表） 
+        //✅ 同步 /cartsdata（總表）
         async syncCartsDataToAPI() {
             const couponStore = useCouponStore()
             const paymentStore = usePaymentStore()
             const token = localStorage.getItem('userToken')
 
-            const discountCoupon = couponStore.appliedDiscountCoupon
-            const freeShippingCoupon = couponStore.appliedFreeeShippingCoupon
+            const discountCoupon = this.cartItems.coupon || null
+            const freeShippingCoupon = this.cartItems.freeShipping || null
                 // console.log('6/8',finalCouponData)
             if (!this.cartItems.id) {
                 console.warn("❗ 無法同步，缺少 cart ID")
@@ -294,9 +310,9 @@ export const useCartStore = defineStore("cartStore",{
                     selected: item.selected,
                 })),
                 total: this.totalAmount,
-                couponCode:discountCoupon || null,
+                coupon:discountCoupon,
                 freight:paymentStore.originalShippingFee,
-                freeShipping:freeShippingCoupon || null,
+                freeShipping:freeShippingCoupon,
                 final_total: this.finalTotal,
                 status: this.cartItems.status || false,
                 orderStatus: this.cartItems.orderStatus || false,
@@ -320,11 +336,17 @@ export const useCartStore = defineStore("cartStore",{
                 }
                 localStorage.setItem("cartItems", JSON.stringify(this.cartItems))
 
+                // console.log('🧮 this.totalAmount:', this.totalAmount)
+                // console.log('💸 this.discountAmount:', this.discountAmount)
+                // console.log('🚚 Shipping Fee:', paymentStore.finalShippingFee)
+                // console.log('🧾 finalTotal (calculated):', this.finalTotal)
+
+
             } catch (error) {
                 console.error("❌ 更新 cartsdata API 失敗:", error)
             }
         },
-
+       
         //刪除購物清單頁面的單一商品div功能
         async removeFromCart(item) {
             const authStore = useAuthStore();
@@ -346,7 +368,7 @@ export const useCartStore = defineStore("cartStore",{
                     console.log(`✅ 已從 /carts 刪除商品: ID ${cartItem.id}`);
                 }
 
-                // 2. 取得 /cartsdata 對應購物車物件
+                // 2. 取得使用者 /cartsdata 對應購物車物件
                 const { data: cartsData } = await axios.get('https://204ed3432b06d7af.mokky.dev/cartsdata', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -368,7 +390,7 @@ export const useCartStore = defineStore("cartStore",{
                         items: [],
                         total: 0,
                         final_total: 0,
-                        couponCode: null,
+                        coupon: null,
                         freight:0,
                         freeShipping:null,
                         status: false,
@@ -386,32 +408,10 @@ export const useCartStore = defineStore("cartStore",{
                     console.log("🧹 所有商品刪除，購物車已重設");
 
                 } else {
-                    const newCartItems = {
-                        ...userCart,
-                        items:updatedItems,
-                    }
-                    // 手動重新計算 total 和 final_total（只針對已更新的 updatedItems）
-                    const total = updatedItems.reduce((sum,item) => sum + item.subTotal,0)
-                    // const final_total = total + (userCart.freight || 0)// 如有免運優惠可再扣除
-                    const final_total = total + userCart.freight - userCart.couponCode.discount - userCart.freeShipping.discount// 如有免運優惠可再扣除
-
-                    // 5. 還有商品 → 只更新 items 陣列
-                    await axios.patch(
-                        `https://204ed3432b06d7af.mokky.dev/cartsdata/${userCart.id}`,
-                        {
-                            ...newCartItems,
-                            total,
-                            final_total, // 若有 getter 可用
-                        },
-                        { headers: { Authorization: `Bearer ${token}` } }
-                    );
-
-                    this.cartItems = {
-                        ...newCartItems,
-                        total,
-                        final_total,
-                    }
-                    localStorage.setItem("cartItems", JSON.stringify(this.cartItems));
+                    // 5. 更新 items 陣列並觸發同步
+                    this.cartItems.items = updatedItems;
+                    this.updateCouponStatusIfInvalid()// ← 自動檢查門檻
+                    await this.syncCartsDataToAPI()
                     console.log("🧺 商品已移除，購物車資料已更新");
                 }
 
@@ -419,6 +419,28 @@ export const useCartStore = defineStore("cartStore",{
                 console.error('❌ 移除商品失敗:', error);
             }
         },
+        //更新折價卷、免運卷失效判斷
+        updateCouponStatusIfInvalid() {
+            const couponStore = useCouponStore()
+            const total = this.totalAmount
+
+            // 折價券失效判斷
+            const discountCoupon = this.cartItems.coupon
+            if (discountCoupon && total < discountCoupon.threshold) {
+                this.cartItems.coupon = null
+                couponStore.clearCoupons()
+                console.log('❌ 折價券未達門檻，自動移除')
+            }
+
+            // 免運券失效判斷
+            const freeShippingCoupon = this.cartItems.freeShipping
+            if (freeShippingCoupon && total < freeShippingCoupon.threshold) {
+                this.cartItems.freeShipping = null
+                couponStore.selectedFreeShippingCoupon = null
+                console.log('❌ 免運券未達門檻，自動移除')
+            }
+        },
+
        
         // 增加商品數量
         increaseQuantity(index) {
@@ -453,21 +475,18 @@ export const useCartStore = defineStore("cartStore",{
             this.syncCartsDataToAPI()// ✅ 同步更新cartsdata 購物車陣列
             console.log("🔄 正在同步 `/cartsdata`...");
         },
-        
-      
-        //商品單一選項的input勾選切換
+        //商品單一選項的input勾選切換 
         toggleItemSelection(index) {
             const item = this.cartItems.items[index];
             item.selected = !item.selected; // 切換選取狀態
             this.syncCartsDataToAPI()// ⬅️ /cartsdata 同步更新selected選取狀態
         },
-        //商品全部的input勾選 全選 / 取消全選
+        //商品全部的input勾選 全選 / 取消全選 
         toggleSelectAll() {
             const allSelected = this.cartItems.items.every(item => item.selected);
             this.cartItems.items.forEach(item => (item.selected = !allSelected)); // 全選或取消全選
         },
-      
-         
+        
         //購物清單頁面的刪除全部的按鈕(逐筆刪除 + 二次確認全部是否刪除) 
         async deleteAllItems() {
             const authStore = useAuthStore();
@@ -489,7 +508,7 @@ export const useCartStore = defineStore("cartStore",{
                     items: [],
                     total: 0,
                     final_total: 0,
-                    couponCode: null,
+                    coupon: null,
                     freeShipping:null,
                 };
 
@@ -516,7 +535,7 @@ export const useCartStore = defineStore("cartStore",{
                     await axios.patch(`https://204ed3432b06d7af.mokky.dev/cartsdata/${userCart.id}`, {
                         items: [],
                         total: 0,
-                        couponCode: null,
+                        coupon: null,
                         freight:0,
                         freeShipping:null,
                         final_total: 0,
@@ -570,32 +589,80 @@ export const useCartStore = defineStore("cartStore",{
             this.cartItems = []; // 清空購物車
             localStorage.removeItem('cartItems'); // 清空本地存儲
         },
-       
-        setupWatchers(){
-            watch(
-                () => this.totalAmount,
-                (newTotal) => {
-                    const discountCoupon = this.cartItems.couponCode
-                    const freeShippingCoupon = this.cartItems.freeShipping
-                    const couponStore = useCouponStore()
+ 
+        //
+        setupCartSyncWatcher(){
+            const couponStore = useCouponStore()
+            const paymentStore = usePaymentStore()
+            const authStore = useAuthStore()
 
-                    // 檢查折價券門檻
-                    if(discountCoupon && discountCoupon.threshold && newTotal < discountCoupon.threshold){
-                        this.cartItems.couponCode = null
+            let isSyncing = false
+
+            watch(
+                // () => JSON.stringify(this.cartItems.items),  // 監聽 items 陣列整體內容
+                () => this.cartItems.items,
+              
+                async (newItems) => {
+                    if(isSyncing) return
+                    isSyncing = true
+
+                    // console.log('🚨 items 變了',  '→', newTotal)
+                    const discountCoupon = this.cartItems.coupon
+                    const freeShippingCoupon = this.cartItems.freeShipping
+
+                    let shouldWait = false // ← 加這行來判斷是否需要等 reactive 完成
+
+
+                    console.log('711 freeShippingCoupon',freeShippingCoupon)
+
+                    // ✅ 折價券門檻不符合，自動移除 newTotal
+                    if (discountCoupon && discountCoupon.threshold && this.totalAmount < discountCoupon.threshold) {
+                        this.cartItems.coupon = null
                         couponStore.selectedDiscountCoupon = null
                         couponStore.manualCoupon = null
-                        this.syncCartsDataToAPI()
+                        shouldWait = true//
                     }
 
-                    // 檢查免運券門檻
-                    if(freeShippingCoupon && freeShippingCoupon.threshold && newTotal < freeShippingCoupon.threshold){
-                        this.cartItems.freeShipping = null
-                        couponStore.selectedFreeShippingCoupon = null
-                        this.syncCartsDataToAPI()
-                    }
+                    // ✅ 免運券門檻／條件不符，自動移除
+                    if(freeShippingCoupon) {
+                        const matchedFreeshipping = couponStore.allFreeshippings.find( f => f.id === freeShippingCoupon.couponId)
+                      
+                        if(matchedFreeshipping){
+                            const user = authStore.user
+                            const shipping = paymentStore.orderInfo.delivery_info.method
+                            const payment = paymentStore.orderInfo.payment_info.method
+                            const selectedItems = this.cartItems.items.filter(item => item.selected)
 
+                            const canUse = isFreeShippingUsable(
+                                matchedFreeshipping.promotion,
+                                matchedFreeshipping.campaign,
+                                matchedFreeshipping.paymentAndShipping.paymentMethods,
+                                matchedFreeshipping.paymentAndShipping.shippingMethods,
+                                shipping,
+                                payment,
+                                user,
+                                matchedFreeshipping.targetGroup,
+                                selectedItems // ⬅️ 只傳勾選的商品
+                            )
+                   
+                            if (!canUse) {
+                                this.cartItems.freeShipping = null
+                                couponStore.selectedFreeShippingCoupon = null
+                                // console.log('before nextTick:', this.cartItems.freeShipping) // 可能還是 null
+                                shouldWait = true // ⬅️ 🔥 加這一行就是你要的關鍵！
+                            }
+                        }
+                    }    
+
+                     // ✅ 如果剛剛清掉了優惠，必須等 reactive 完成
+                    if (shouldWait) await nextTick()
+                        // console.log('after nextTick:', this.cartItems.freeShipping) // 確保 reactive 更新完成
+                    // ✅ 每次金額變動都同步 API
+                    await this.syncCartsDataToAPI()
+                    isSyncing = false
                 },
                 { immediate:true }
+                // deep:true,
             )
         },
 

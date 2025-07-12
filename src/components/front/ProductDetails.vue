@@ -86,11 +86,12 @@
             <label class="block font-medium text-gray-700">Color:</label>
             <div class="flex flex-wrap gap-3 mt-2">
               <button 
-                v-for="(color,index) in availableColors" 
+                v-for="(colorObj,index) in product.colors" 
                 :key="index" 
-                :class="[productStore.colorsTailwindcss[color] || 'bg-gray-200', selectedColor === color ? 'ring-2 ring-black' : 'ring-2 ring-transparent']"
+                :class="[productStore.colorsTailwindcss[colorObj.color],  
+                selectedColor === colorObj.color ? 'ring-2 ring-black' : 'ring-2 ring-transparent']"
                 class="w-8 h-8 rounded-full cursor-pointer transition-all duration-200 shadow-md hover:shadow-lg" 
-                @click="selectColor(color)">
+                @click="selectColor(colorObj.color)">
               </button>
             </div>
           </div>
@@ -208,10 +209,6 @@
 
       // 返回包含主圖和非空顏色圖片的陣列
       return [this.product.imgurl, ...colorImages];
-    },
-       // 獲取所有可選顏色（無論有無庫存）
-      availableColors() {
-        return [...new Set(this.product.variants.map(v => v.color))];
       },
        // 獲取當前顏色的所有尺寸，不重覆，並尺寸排序（無論有無庫存）
       sizeOptions() {
@@ -308,10 +305,10 @@
         if (colorData && colorData.imageurl) {
           this.setActiveImage(colorData.imageurl);
         }
-       
+        // 因為不同顏色對應不同尺寸
         // 如果目前選擇的尺寸仍然存在於新顏色的 sizeOptions，就保持選擇
         if (!this.sizeOptions.includes(this.selectedSize)) {
-          this.selectedSize = null; // 只有當已選尺寸不在新顏色內時才重設
+          this.selectedSize = null; // 只有當已選尺寸不在新顏色內時需要重設
         }
        
       },

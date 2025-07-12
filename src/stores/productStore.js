@@ -75,34 +75,29 @@ export const useProductStore = defineStore('productStore', {
   },
   getters: {
     
-    // 過濾符合篩選條件的商品
+    // 過濾符合篩選條件的商品 
     filteredProducts(state) {
-      //
       const adminProductStore = useAdminProductStore()
       let filtered = adminProductStore.products.filter((item) => {
           const { category, price, color, size, searchText } = state.filter;
-          // 獲取所有商品價格的最小值
-          const minProductPrice = Math.min(...adminProductStore.products.map(product => product.price || Infinity));
-  
-          // 類別篩選：當 filter.category 為空時，顯示所有商品
+         
+          // 類別篩選：當 filter.category 為All時，顯示所有商品
           const isCategoryMatch = category === 'All' || item.category === category;
   
-          // 價格範圍：忽略 max 小於最小商品價格的情況(解決商品列表不見問題)(商品有特價 (price > 0)，就用 price 排序；如果 price === 0，則用 OriginalPrice 排序。)
-          //最低價或最高價沒有輸入數字(null)時可以篩選的
+          // (商品有特價 (price > 0)，就用 price 排序；如果 price === 0，則用 OriginalPrice 排序。)
           const itemPrice = item.price > 0 ? item.price : item.OriginalPrice;
-          const inPriceRange = 
-              (!price.min || itemPrice >= price.min) &&
-              (price.max === null || price.max < minProductPrice || itemPrice <= price.max);
+          
+          // 因為v-model.number一旦輸入過，再清空它會把空字串 '' 自動轉成 0，不再是 null。所以要在inPriceRange加上price.max !== 0，避免沒有輸入數字仍在篩選狀態。
+          const inPriceRange =
+            (price.min == null || itemPrice >= price.min) &&
+            (!price.max && price.max !== 0 || itemPrice <= price.max);
 
-  
           // 顏色篩選
           const matchesColor = !color || item.colors.some(colorObj => colorObj.color === color);
 
-         
           // 尺寸篩選
           const matchesSize = !size || item.variants.some(variant => variant.size === size);
 
-  
           // 關鍵字篩選
           const matchesSearch =
               !searchText || item.name.toLowerCase().includes(searchText.toLowerCase());
@@ -129,7 +124,6 @@ export const useProductStore = defineStore('productStore', {
 
       return filtered;
     },
-  
     // 當前分頁的商品清單(可用)
     paginatedProducts(state) {
         const start = (state.currentPage - 1) * state.itemsPerPage;
@@ -147,7 +141,7 @@ export const useProductStore = defineStore('productStore', {
     colorClass: (state) => (color) => state.colorsTailwindcss[color] || 'bg-gray-200',// 如果找不到顏色名稱，返回 bg-gray-200
       
     
-    // markBackgroundColor 根據標籤名稱或百分比返回類名
+    // markBackgroundColor 根據標籤名稱或百分比返回類名 放在Card.vue
     markBackgroundColor: (state) => (markitem) => {
       const isPercentage = /^-\d+%$/.test(markitem); // 檢查是否為百分比
       //百分比類型返回藍色 ；匹配或預設為灰色

@@ -387,16 +387,18 @@ export default{
                 type="text"
                 class="w-full rounded border px-3 py-2"
                 placeholder="請輸入管理員名稱"
+                disabled
               />
             </div>
   
             <div>
               <label class="block font-medium text-gray-700">更新時間</label>
+              <!-- readonly -->
               <input
                 v-model="adminProductStore.tempProduct.updatedAt"
                 type="text"
                 class="w-full rounded border bg-gray-100 px-3 py-2"
-                readonly
+                disabled
               />
             </div>
           </div>

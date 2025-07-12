@@ -226,7 +226,7 @@ export default {
               </div>
             </div>
             <!-- 優惠卷 class="flex justify-end"-->
-            <div v-if="cartStore.cartItems?.couponCode && isEligible(cartStore.cartItems.couponCode)" class="flex justify-end">
+            <!-- <div v-if="cartStore.cartItems?.couponCode && isEligible(cartStore.cartItems.couponCode)" class="flex justify-end">
               <div class="w-full max-w-sm flex justify-between items-center text-red-500">
                 <span>
                   折價卷 滿 {{ cartStore.cartItems.couponCode.threshold}}折{{cartStore.cartItems.couponCode.discount}}
@@ -235,7 +235,19 @@ export default {
                   -{{ formatCurrency(cartStore.cartItems.couponCode.discount) }}
                 </span>
               </div>
-            </div> 
+            </div>  -->
+            <!-- 優惠券顯示（支援 amount / percent）-->
+            <div v-if="cartStore.cartItems?.coupon && isEligible(cartStore.cartItems.coupon)" class="flex justify-end">
+              <div v-if="cartStore.cartItems.coupon.offerType === 'amount'" class="w-full max-w-sm flex justify-between items-center text-red-500">
+                <p>折價券 滿 {{ cartStore.cartItems.coupon.threshold }} 元折 {{ formatCurrency(cartStore.cartItems.coupon.discount) }}元</p>
+                <p>-{{ formatCurrency(cartStore.discountAmount) }}</p>
+              </div>
+
+              <div v-else-if="cartStore.cartItems.coupon.offerType === 'percent'" class="w-full max-w-sm flex justify-between items-center text-red-500">
+                <p>折價券 滿 {{ cartStore.cartItems.coupon.threshold }} 元折 {{ cartStore.cartItems.coupon.discount }}%</p>
+                <p>-{{ formatCurrency(cartStore.discountAmount) }}</p>
+              </div>
+            </div>
             <!-- 運費 -->
             <div class="flex justify-end">
               <div class="w-full max-w-sm flex justify-between items-center">
@@ -246,7 +258,16 @@ export default {
             <!-- 免運卷 -->
             <div v-if="cartStore.cartItems.freeShipping && isEligible(cartStore.cartItems.freeShipping)" class="flex justify-end">
               <div class="w-full max-w-sm flex justify-between items-center text-red-500">
-                <span>運費折抵 滿 {{ cartStore.cartItems.freeShipping.threshold }} 折 {{ cartStore.cartItems.freeShipping.discount }}</span>
+                <p>
+                  運費折抵
+                  <span v-if="cartStore.cartItems.freeShipping.miniAmount"> 
+                    滿 {{ cartStore.cartItems.freeShipping.miniAmount }} 元
+                  </span> 
+                  <span v-else-if="cartStore.cartItems.freeShipping.miniPieces">
+                    滿 {{ cartStore.cartItems.freeShipping.miniPieces }} 件
+                  </span>
+                    折 {{ cartStore.cartItems.freeShipping.discount }} 元
+                </p>
                 <span>-{{ formatCurrency(cartStore.cartItems.freeShipping.discount) }}</span>
               </div>
             </div>

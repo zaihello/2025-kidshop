@@ -6,8 +6,8 @@ import { useProductStore } from '../../stores/productStore'
 export default{
     name:"Card",
     props:{
-        product:Object,//從ProductList.vue傳遞過來
-        handleWishlistClick:Function,//從ProductList.vue傳遞過來
+        product:Object,//從ProductList.vue、AccountWishes.vue傳遞過來
+        handleWishlistClick:Function,//從ProductList.vue、AccountWishes.vue傳遞過來
     }, 
     computed:{
         // 动态获取各个 store 实例
@@ -69,14 +69,15 @@ export default{
                 </div>
                 <!-- mark -->
                 <!-- 第一top8px，後面都加30px bg-lime-600-->
+                <!--:style="{  top: `${8 + index * 30}px`}"-->
                 <div
                     v-for="(markitem, index) in product.mark"
                     :key="markitem"
                     class="absolute text-white left-2 py-1 px-2 rounded-xl text-xs font-bold"
                     :class="productStore.markBackgroundColor(markitem)"
-                    :style="{  top: `${8 + index * 30}px`}"
+                    :style="{  top: `${8 + index *30}px`}"
                 >
-                    <div> {{ markitem }} </div>
+                    <span> {{ markitem }} </span>
                 </div>
                 <!-- Hover 出現的框架 -->
                 <!-- icon 水平置中left-1/2 transform -translate-x-1/2；item -->
@@ -108,7 +109,7 @@ export default{
                   
                       
                     <div class="group/wishlist relative">
-                        <!-- -->
+                        
                         <img 
                             :src="isInWishlist ? './check.svg' : './wishlist.svg'"
                             @click="handleClick"
@@ -123,11 +124,11 @@ export default{
             <div class="w-full text-center">
                 <!-- color -->
                 <div v-if="product.variants && product.variants.length > 0" class="flex justify-center space-x-2 my-2">
-                     <!-- ui只顯示唯一的color選項 -->
+                    <!-- 只顯示唯一的color選項-->
                     <div
-                         v-for="(color,index) in [...new Set(product.variants.map(v => v.color))]"
+                        v-for="(colorObj,index) in product.colors"
                         :key="index"
-                        :class="productStore.colorClass(color)"  
+                        :class="productStore.colorClass(colorObj.color)"  
                         class="w-6 h-6 rounded-full"
                     >
                     </div>

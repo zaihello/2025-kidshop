@@ -482,7 +482,11 @@ export default {
   
         <!-- 商品列表 -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 px-2 gap-4 lg:px-0 ">
-         
+          <!-- 沒有商品時顯示提示 -->
+          <div v-if="productStore.paginatedProducts.length === 0" class="text-center col-span-full">
+            <p>很抱歉，沒有篩選到符合條件的商品。</p>
+          </div>
+          <!-- 有商品時渲染卡片 -->
           <Card
             v-for="(product,index) in productStore.paginatedProducts"
             :key="product.id"

@@ -147,15 +147,16 @@ export default{
                 </span>
               </div>
             </div>
-            <!-- 優惠卷 -->
-            <div class="flex justify-end text-red-500">
-              <div class="w-full max-w-sm flex justify-between items-center">
-                <span>
-                  折價卷 滿{{ orderData.couponCode.threshold }} 折 {{orderData.couponCode.discount}}
-                </span>
-                <span>
-                   -{{ formatCurrency(orderData.couponCode.discount) }}
-                </span>
+            <!-- 優惠券顯示（支援 amount / percent）-->
+            <div v-if="orderData.coupon" class="flex justify-end">
+              <div v-if="orderData.coupon.offerType === 'amount'" class="w-full max-w-sm flex justify-between items-center text-red-500">
+                <p>折價券 滿 {{ orderData.coupon.threshold }} 元折 {{ formatCurrency(orderData.coupon.discount) }}</p>
+                <p>-{{ formatCurrency(orderData.discountAmount) }}</p>
+              </div>
+
+              <div v-else-if="orderData.coupon.offerType === 'percent'" class="w-full max-w-sm flex justify-between items-center text-red-500">
+                <p>折價券 滿 {{ orderData.coupon.threshold }} 元折 {{ orderData.coupon.discount }}%</p>
+                <p>-{{ formatCurrency(orderData.discountAmount) }}</p>
               </div>
             </div>
             <!-- 運費 -->
@@ -172,9 +173,16 @@ export default{
             <!-- 免運卷 -->
             <div v-if="orderData.freeShipping" class="flex justify-end text-red-500">
               <div class="w-full max-w-sm flex justify-between items-center">
-                <span>
-                  運費折抵 滿{{ orderData.freeShipping.threshold }} 折 {{ orderData.freeShipping.discount }}
-                </span>
+                <p>
+                  運費折抵
+                  <span v-if="orderData.freeShipping.miniAmount">
+                    滿{{ orderData.freeShipping.miniAmount }} 元
+                  </span>
+                  <span v-else="orderData.freeShipping.miniPieces">
+                    滿{{ orderData.freeShipping.miniPieces }} 件
+                  </span>
+                    折 {{ orderData.freeShipping.discount }} 元
+                </p>
                 <span>
                   -{{ formatCurrency(orderData.freeShipping.discount) }}
                 </span>

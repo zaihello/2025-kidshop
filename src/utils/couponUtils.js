@@ -1,12 +1,12 @@
+import { isUserMatchedTargetGroup } from './freeShippingUtils'
+import { useCartStore } from '../stores/cartStore' 
 
-//符合折價卷活動判斷條件
-export const conditionCheckers = {
-    First:(user,ordersData) => isFirstPurchase(user.id,ordersData),
-    Birthday:(user) => isBirthdayMonth(user.birthday),  
-}
-// 判斷折價卷是否為首次購買（根據 cartsData 判斷該 user 是否沒有已購買紀錄）
+
+// 判斷折價卷是否為首次購買（根據 cartsData 判斷該 user 是否沒有已購買紀錄） 
 export function isFirstPurchase(userId,ordersData = []){
-    const userOrders = ordersData.filter(order => order.user_id === userId)
+    const userOrders = ordersData.filter(order => order.user_id === userId && order.payment_info.status === 'paid')
+
+    console.log('userOrders:',userOrders)
     // 若沒有購物車資料或購物車內無商品或未完成結帳，視為首次
     return userOrders.length === 0
 }
@@ -17,25 +17,6 @@ export function isBirthdayMonth(birthday){
     const birthMonth = new Date(birthday).getMonth()
     const currentMonth = new Date().getMonth()
     return birthMonth === currentMonth
-}
-
-// 主函式：篩選符合資格的折價卷
-export function filterAvailableCouponsForUser(user,coupons,ordersData){
-    return coupons.filter(coupon => {
-        const conditions = coupon.promotion?.useCoupons?.inCenter?.customReceiveCondition || [] 
-        // const conditions = coupon.promotion.useCoupons.inCenter.customReceiveCondition || [] //
-        // 沒有設定任何條件，代表所有人可領取
-        if(conditions.length === 0) return true
-
-        const matchFirst = conditions.includes('First') ? isFirstPurchase(user.id,ordersData) : true
-        const matchBirthday = conditions.includes('Birthday') ? isBirthdayMonth(user.birthday) : true
-
-        console.log('user birthday:', user.birthday)
-        console.log('coupon condition:', conditions)
-        console.log('isBirthdayMonth:', isBirthdayMonth(user.birthday))
-
-        return matchFirst && matchBirthday
-    })
 }
 
 //折價券與免運券自動發放到該使用者的優惠卷管理中 
@@ -55,7 +36,11 @@ export async function autoIssueAllCoupons({user,axiosInstance}){
   const existingUserCoupons = userCouponsRes.data
 
   //折價卷
-  const availableCoupons = filterAvailableCouponsForUser(user,allCoupons,ordersData)
+  const availableCoupons = allCoupons.filter(coupon => {
+    return isTargetGroupUsable(coupon.targetGroup, user, ordersData)
+  })
+
+
   for(const coupon of availableCoupons){
     const alreadyIssued = existingUserCoupons.some(uc => uc.coupon_id === coupon.id)
     if(!alreadyIssued){
@@ -87,6 +72,7 @@ export async function autoIssueAllCoupons({user,axiosInstance}){
       })
     }
   }
+ 
   // 更新過期狀態（要帶入兩類 coupon）
   await updateExpiredUserCoupons({
     userCoupons:existingUserCoupons,
@@ -105,146 +91,136 @@ export function isExpired (endDateStr) {
   return endDate < today
 }
 
-// 免運卷依目標群組(會員、會員等級)發送
-export function isUserMatchedTargetGroup(user,targetGroup){
-  if(!user) return false
 
-  const group = targetGroup.selectedGroup
-
-  if(group === 'all') return true
-  
-  if(group === 'members'){
-    if(targetGroup.members.levelOption === 'All') return true
-    return targetGroup.members.selectedLevels.some(l => l.value === user.level) 
-  }
-
-  if(group === 'tagged'){
-    return targetGroup.tags.selectedTags.some(tag => user.tags?.includes(tag.value))
-  }
-
-  return false
-}
-
-
-
-//status: usable已領取 expired已過期 used以使用。可使用頁面、已失效頁面資料格式呈現在前端。
+//status: usable已領取 expired已過期 used以使用。result為可使用頁面、已失效頁面資料格式呈現在前端。 7/3
 export function formatUserCouponsList(user, userCoupons, allCoupons, ordersData, freeshippings) {
-  const usableCoupons = []//可使用頁面
-  const invalidCoupons = []//已失效頁面
+  const result = []
   
   // 先從訂單中找出所有使用過的優惠券 ID
-  const usedCouponIds = new Set()
-  ordersData.forEach(order => {
-    if (order.couponCode && order.couponCode.code) {
-      usedCouponIds.add(order.couponCode.code)
-    }
-  })
+  const usedCouponIds = new Set(ordersData.map(order => order?.coupon?.code).filter(Boolean))
+  
   // ✅ 處理 /userCoupons api (折扣券)
   userCoupons.forEach(userCoupon => {
-    const coupon = allCoupons.find(c => c.id === userCoupon.coupon_id)
-    //new
-     if (!coupon || !coupon.campaign || !coupon.promotion || !coupon.promotion.useCoupons) {
-    console.warn('找不到對應 coupon 或欄位異常，coupon_id:', userCoupon.coupon_id)
-    return
-  }
-    const campaign = coupon.campaign
-    // 取得正確的折扣資料
-    const offerType = campaign.basic.offerType
+    const matched = allCoupons.find(c => c.id === userCoupon.coupon_id)
+    if(!matched) return
 
+    const promotion = matched.promotion
+    // 取得正確的折扣資料
+    const offerType = promotion.basic.offerType
+    const selectedMethod = promotion.useCoupons.selectedReceiveMethod 
+    let codeType = 'system'
+    let code = ''
+    let validFrom = null
+    let validTo = null
     let threshold = 0
     let discount = 0
     
+    // ⬇️ 折扣資訊
     if (offerType === 'percent') {
-      threshold = Number(campaign.percentDiscount.threshold)
-      discount = Number(campaign.percentDiscount.discount)
+      threshold = Number(promotion.percentDiscount.threshold)
+      discount = Number(promotion.percentDiscount.discount)
     } else if (offerType === 'amount') {
-      threshold = Number(campaign.amountDiscount.threshold)
-      discount = Number(campaign.amountDiscount.discount)
+      threshold = Number(promotion.amountDiscount.threshold)
+      discount = Number(promotion.amountDiscount.discount)
     }
 
-    const selectedMethod = coupon.promotion.useCoupons.selectedReceiveMethod
-    // ▶ 手動輸入券（EnterCouponCode）
-    const codeInfo = selectedMethod === 'EnterCouponCode'
-      ? coupon.promotion.useCoupons.enterCouponCode
-      : coupon.promotion.useCoupons.inCenter
-    const code = selectedMethod === 'EnterCouponCode'
-      ? (codeInfo.selectedCodeType === 'Universal'
-          ? codeInfo.universal.code
-          : '[多組代碼]')
-      : codeInfo.code
+    // ⬇️ 優惠碼與效期
+    if(selectedMethod === 'EnterCouponCode') {
+      const enter = promotion.useCoupons.enterCouponCode
+      const codeTypeSelected = enter.selectedCodeType
+      if(codeTypeSelected === 'Universal') {
+        codeType = 'manual'//manual手動輸入代碼
+        code = enter.universal.code
+        validFrom = enter.universal.promotionStartDate
+        validTo = enter.universal.promotionEndDate
+      }else{
+        codeType = 'manual'
+        code = '[多組代碼]'
+        validFrom = enter.independent.promotionStartDate
+        validTo = enter.independent.promotionEndDate
+      }
+    }else{
+      const inCenter = promotion.useCoupons.inCenter
+      codeType = 'system'//自動發放型券 
+      code = inCenter.code
+      validFrom = inCenter.promotionStartDate
+      validTo = inCenter.promotionEndDate
+    }
+    
+    // ⬇️ 狀態判斷 原本
+    let status = 'usable'
+    if(userCoupon.used || usedCouponIds.has(code)) {
+     status = 'used'
+    }else if (userCoupon.expired ) {//
+     status = 'expired'
+    }
 
-    const validFrom = codeInfo.promotionStartDate
-    const validTo = codeInfo.promotionEndDate
-    const isExpiredFlag = isExpired(validTo)
-
-    const formatted = {
-      id: userCoupon.id,
-      couponId: coupon.id,
-      title: campaign.basic.campaignTitle,
+    result.push({
+      id:userCoupon.id,
+      couponId:matched.id,
+      title:matched.campaign.basic.campaignTitle,
       offerType,
       threshold,
       discount,
-      codeType: selectedMethod === 'EnterCouponCode' ? 'manual' : 'system',//manual手動輸入代碼、system自動發放型券 
+      codeType,
       code,
       validFrom,
-      validTo
-    }
-
-    if (userCoupon.used) {
-      invalidCoupons.push({ ...formatted, status: 'used' })
-    } else if (isExpiredFlag) {
-      invalidCoupons.push({ ...formatted, status: 'expired' })
-    } else {
-      usableCoupons.push({ ...formatted, status: 'usable' })
-    }
+      validTo,
+      status,
+      fullCouponData: matched // ✅ 加入完整資料給 isCouponUsable 使用
+    })
   })
-  // ✅ 處理 freeshippings (免運券)
-  freeshippings.forEach(freeshipping => {
-    // 只處理 userCoupon 有對應的免運券（coupon_id = freeshipping.id）
-    const freeUserCoupon = userCoupons.find(uc => uc.coupon_id === freeshipping.id)
-    if (!freeUserCoupon) return
-    // ❗️判斷是否符合目標群組
-    const isMatched = isUserMatchedTargetGroup(user, freeshipping.targetGroup)
-    if (!isMatched) return
+  // ✅ 處理 /freeshippings api 免運券
+  freeshippings.forEach(coupon => {
+    // 只處理 userCoupon 有對應的免運券
+    const userCoupon = userCoupons.find(u => u.coupon_id === coupon.id)
+    if (!userCoupon) return
 
-    const promotion = freeshipping.promotion.useCoupons.inCenter
-    const title = freeshipping.campaign.basic.campaignTitle
-    const threshold = freeshipping.campaign.conditionThreshold.miniAmount
+    const promotion = coupon.promotion?.useCoupons?.inCenter || {}
+    const title = coupon.campaign?.basic?.campaignTitle || ''
     const validFrom = promotion.promotionStartDate
     const validTo = promotion.promotionEndDate
-    const isExpiredFlag = isExpired(validTo)
 
-    const freeShippingData = {
-      id: freeUserCoupon.id,
-      couponId: freeshipping.id,
+    const threshold = coupon.campaign?.conditionThreshold || {}
+    const miniAmount = threshold.miniAmount 
+    const miniPieces = threshold.miniPieces 
+
+    const discount = 60 // ❗️免運券固定設為 60，或你可調整
+
+    let status = 'usable'
+    if (userCoupon.used || usedCouponIds.has('自動套用免運')) {
+      status = 'used'
+    } else if (userCoupon.expired) {//
+      status = 'expired'
+    }
+
+    result.push({
+      id: userCoupon.id,
+      couponId: coupon.id,
       title,
       offerType: 'freeShipping',
-      threshold,
-      discount: 60,//運費暫設
+      miniAmount,
+      miniPieces, 
+      // threshold,
+      discount,
       codeType: 'system',
       code: '自動套用免運',
       validFrom,
-      validTo
-    }
-
-    if (freeUserCoupon.used) {
-      invalidCoupons.push({ ...freeShippingData, status: 'used' })
-    } else if (isExpiredFlag) {
-      invalidCoupons.push({ ...freeShippingData, status: 'expired' })
-    } else {
-      usableCoupons.push({ ...freeShippingData, status: 'usable' })
-    }
+      validTo,
+      status,
+      fullCouponData: coupon, // ✅ 加入完整資料給 isFreeShippingUsable 使用
+      // freeShipping:coupon //為了判斷該優惠卷是否符合使用(免運卷主體資料)
+      
+    })
   })
+  // console.log('🎟️ 7/9格式化後的優惠券清單:', formattedCoupons)
 
-  return {
-    usableCoupons,
-    invalidCoupons
-  }
+  return result
+ 
 }
 
 
-
-// 更改/usercoupons的expired未使用已過期的折價卷、免運卷 
+// 更改/usercoupons的expired未使用已過期的折價卷、免運卷 原本
 export async function updateExpiredUserCoupons({userCoupons,allCoupons,freeshippings,axiosInstance}){
   for(const userCoupon of userCoupons){
     if(userCoupon.used) continue
@@ -254,11 +230,12 @@ export async function updateExpiredUserCoupons({userCoupons,allCoupons,freeshipp
     if(userCoupon.type === 'discount'){
       const coupon = allCoupons.find( c => c.id === userCoupon.coupon_id )
       if(!coupon) continue
-      validTo = getPromotionEndDate(coupon)
+      validTo = getPromotionEndDate(coupon.promotion)
     }else if(userCoupon.type === 'freeShipping'){
       const freeShipping = freeshippings.find(f => f.id === userCoupon.coupon_id)
       if(!freeShipping) continue
-      validTo = getPromotionEndDate(freeShipping)
+      validTo = getPromotionEndDate(freeShipping.promotion)
+
     }else{
       // 若 type 是未知類型，也跳過
       continue
@@ -273,33 +250,64 @@ export async function updateExpiredUserCoupons({userCoupons,allCoupons,freeshipp
     }
   }
 
-  
 }
-//取得的promotionEndDate
-export function getPromotionEndDate(coupon){
-  const {selectedReceiveMethod,inCenter,enterCouponCode,getCoupons} = coupon.promotion.useCoupons
 
-  switch(selectedReceiveMethod){
-    case 'InCenter':
-      return inCenter.promotionEndDate
-    case 'EnterCouponCode':
-      // 預設只判斷 universal，若要判斷 independent 可加條件
-      return enterCouponCode.universal.promotionEndDate
-    case 'GetCoupons':
-      return getCoupons.promotionEndDate
-    default:
-      return null  
+
+// 取得 promotion 的結束時間（適用於 /usercoupons 的 expired 判斷）
+export function getPromotionEndDate(promotion) {
+  if (!promotion || typeof promotion !== 'object') return null
+
+  const selectedMethod = promotion.selectedMethod
+
+  if (selectedMethod === 'automatic') {
+    const auto = promotion.automatic || {}
+    return auto.promotionEndDate || null
   }
+
+  if (selectedMethod === 'UseCoupons') {
+    const useCoupons = promotion.useCoupons || {}
+    const method = useCoupons.selectedReceiveMethod
+
+    if (method === 'InCenter') {
+      return useCoupons.inCenter?.promotionEndDate || null
+    }
+
+    if (method === 'EnterCouponCode') {
+      const enter = useCoupons.enterCouponCode || {}
+      const type = enter.selectedCodeType
+
+      if (type === 'Universal') {
+        return enter.universal?.promotionEndDate || null
+      }
+
+      if (type === 'Independent') {
+        return enter.independent?.promotionEndDate || null
+      }
+    }
+
+    if (method === 'GetCoupons') {
+      return useCoupons.getCoupons?.promotionEndDate || null
+    }
+  }
+
+  if (selectedMethod === 'RecommendedActivities') {
+    return promotion.recommended?.promotionEndDate || null
+  }
+
+  return null
 }
 
 
-// 將折價券、免運卷標記為已使用(在PayList.vue按下支付按鈕後標記)
+
+// 將折價券、免運卷標記為已使用(在PayList.vue按下支付按鈕後標記) 
 export async function markUserCouponAsUsed({userId,couponId,type,axiosInstance}){
   try{
   
     const { data: userCoupons } = await axiosInstance.get(`/usercoupons?user_id=${userId}`)
     // 需同時比對 coupon_id 與 type
     const target = userCoupons.find(item => item.coupon_id === couponId && item.type === type) 
+//     console.log('🧪 627userCoupons:', userCoupons)
+// console.log('🧪 搜尋條件:', { couponId, type })
 
     if(target){
       await axiosInstance.patch(`/usercoupons/${target.id}`,{
@@ -315,6 +323,7 @@ export async function markUserCouponAsUsed({userId,couponId,type,axiosInstance})
   }
 }
 
+
 export function formatDateTime(){
   const now = new Date()
   const year = now.getFullYear()
@@ -325,3 +334,255 @@ export function formatDateTime(){
   return `${year}-${month}-${day} ${hours}:${minutes}`
 
 }
+
+//621
+//判斷優惠卷在(設定當天日期)以前，前端不會出現該優惠卷。(暫改)
+export function isInDateRange(start,end,neverExpires,now = new Date()){
+  if(neverExpires) return true
+  if(!start || !end) return false
+  const s = new Date(start)
+  const e = new Date(end)
+
+  // 👉 測試時強制回傳 true（即使過期也當作還在有效期）
+  return true;
+  
+  // 🔒 原本正式版本
+  return s <= now && now <= e  
+}
+//1.
+export function isCampaignUsable(campaign){
+  return !!campaign.basic.campaignTitle.trim()
+}
+//2.
+export function isTargetGroupUsable(targetGroup,user,ordersData){
+  if(!targetGroup || !user) return false
+  
+  const group = targetGroup.selectedGroup
+
+  if(group === 'all') return true
+
+  if(group === 'members') {
+    const levelOption = targetGroup.members.levelOption
+
+    //所有會員
+    if(levelOption === 'All') {
+      const condition = targetGroup.members.basicConditions
+      if(condition === 'First') {
+        console.log('是否為首購',isFirstPurchase(user.id,ordersData))
+        return isFirstPurchase(user.id,ordersData)
+        
+      }else if(condition === 'Birthday') {
+       console.log('是否生日當月:', isBirthdayMonth(user.birthday));
+       return isBirthdayMonth(user.birthday)
+      }
+      return true   // 沒有條件就視為通過
+    }
+
+    //指定會員等級
+    if(levelOption === 'MemberLevel') {
+      return targetGroup.members.selectedLevels.some(level => level.value === user.role)
+    }
+  }
+
+  if(group === 'tagged'){
+    //user裡目前並沒有tags屬性
+    return targetGroup.tags.selectedTags.some(tag => user.tags.includes(tag.value))
+  }
+
+  return false
+
+}
+//沒有限制 若 paymentAndShipping 沒有任何值為 true，代表不限制付款與配送方式，則預設為可用
+//有限制 若設定了限制，則僅當使用者選的付款與配送方式都有包含在內時才為可用  原本
+// 3.加上(只有有設定才檢查時間 驗證)
+export function isPromotionUsable(promotion,cartItems = []){
+  if(!promotion || typeof promotion !== 'object') return false
+
+  const basic = promotion.basic || {}
+  const selectedMethod = promotion.selectedMethod || ''
+  const offerType = basic.offerType || ''
+
+  if(!offerType) return false
+  
+  // ⛳ 購物車總金額
+  const totalAmount = cartItems.reduce((sum, item) => sum + item.subTotal, 0);
+
+  // ✅ 折扣設定驗證 + 門檻判斷
+  if(offerType === 'percent') {
+    const discount = Number(promotion.percentDiscount.discount)
+    const threshold = Number(promotion.percentDiscount.threshold || 0);
+
+    if(isNaN(discount) || discount <= 0 || discount > 100) return false
+    if (threshold && totalAmount < threshold) return false;
+  } else if (offerType === 'amount') {
+    const discount = Number(promotion.amountDiscount.discount)
+    const threshold = Number(promotion.amountDiscount.threshold || 0);
+  
+    if(isNaN(discount) || discount <= 0) return false
+    if (threshold && totalAmount < threshold) return false;
+  } else if (offerType === 'gift'){
+     // 可視專案擴寫邏輯
+  } else {
+    return false
+  }
+  
+  //✅選擇自動套用優惠(暫時disable)
+  if(selectedMethod === 'automatic') {
+    const auto = promotion.automatic || {}
+
+    // 次數限制（若不是無限）
+    if(!auto.unlimited && (!auto.usageLimit || Number(auto.usageLimit) <= 0 )){
+      return false
+    }
+
+    // 有效日期
+    if(!isInDateRange(auto.promotionStartDate,auto.promotionEndDate,auto.neverExpiresPromotion))
+      return false
+  }
+
+  //✅選擇使用優惠卷
+  if(selectedMethod === 'UseCoupons') {
+    const useCoupons = promotion.useCoupons || {}
+    const method = useCoupons.selectedReceiveMethod
+
+    let validFrom = null
+    let validTo = null
+    let neverExpires = false
+    let shouldCheckDate = false // 只有有設定才檢查時間
+
+    // 1️⃣ InCenter 領券中心
+    if(method === 'InCenter') {
+      const inCenter = useCoupons.inCenter || {}
+
+      if(!inCenter.unlimited && (!inCenter.usageLimit || Number(inCenter.usageLimit) <= 0)){
+        return  false 
+      }
+      validFrom = inCenter.promotionStartDate
+      validTo = inCenter.promotionEndDate
+      neverExpires = inCenter.neverExpiresPromotion
+      shouldCheckDate = !!(validFrom || validTo) || !inCenter.neverExpiresPromotion// ✅只有有資料才驗證
+    
+
+    // 2️⃣ EnterCouponCode 輸入代碼
+    }else if(method === 'EnterCouponCode') {
+      const enter = useCoupons.enterCouponCode || {}
+      const codeType = enter.selectedCodeType
+      
+      //單組通用代碼
+      if(codeType === 'Universal') {
+        const u = enter.universal || {}
+
+        if(!u.code || u.code.trim() === '') return false
+
+        if(!u.unlimited && (!u.usageLimit || Number(u.usageLimit) <= 0)) return false
+
+        validFrom = u.promotionStartDate
+        validTo = u.promotionEndDate
+        neverExpires = u.neverExpiresPromotion 
+        shouldCheckDate = !!(validFrom || validTo) || !u.neverExpiresPromotion
+        
+      }
+      //多組獨立代碼(暫時disable)
+      if(codeType === 'Independent') {
+        const i = enter.independent || {}
+
+        if(!Array.isArray(i.codes) || i.codes.length === 0) return false
+        
+        validFrom = i.promotionStartDate
+        validTo = i.promotionEndDate
+        neverExpires = i.neverExpiresPromotion
+        shouldCheckDate = !!(validFrom || validTo) || !i.neverExpiresPromotion
+      }// 3️⃣ GetCoupons 推播領取(暫時disable)
+    } else if(method === 'GetCoupons') {
+      const g = useCoupons.getCoupons || {} 
+      //使用次數或無限
+      if(!g.unlimited && (!g.usageLimit || Number(g.usageLimit) <= 0)){
+        return false
+      }
+
+      validFrom = g.promotionStartDate
+      validTo = g.promotionEndDate
+      neverExpires = g.neverExpiresPromotion
+      shouldCheckDate = !!(validFrom || validTo) || !g.neverExpiresPromotion
+    }
+
+    // ✅ 有啟用日期設定時才檢查日期範圍
+    if (shouldCheckDate && !isInDateRange(validFrom, validTo, neverExpires)) return false
+
+    console.log('✅ isPromotionUsable 判斷結果: true', { validFrom, validTo, neverExpires })
+
+    return true
+  }
+
+  // ✅ 推薦活動(暫時disable)
+  if(selectedMethod === 'RecommendedActivities') {
+    const r = promotion.recommended || {}
+    if(!r.unlimited && (!r.usageLimit || Number(r.usageLimit) <= 0)){
+      return false
+    }
+    return true
+  }
+  return false
+}
+
+
+//4.的子涵式
+const paymentMap = {
+  credit: 'creditCard',
+  cod: 'cashOnDelivery',
+  line: 'linePay'
+}
+
+const shippingMap = {
+  home: 'blackCat',
+  family: 'familyMart',
+  seven: 'sevenEleven'
+}
+
+function normalizePaymentKey(userPayment) {
+  return paymentMap[userPayment] || userPayment
+}
+
+function normalizeShippingKey(userShipping) {
+  return shippingMap[userShipping] || userShipping
+}
+//4.付款方式、運送方式符合 
+export function isPaymentAndShippingUsable(paymentAndShipping, selectedPayment, selectedShipping) {
+  // 無限制，視為通過
+  if (!paymentAndShipping) return true
+
+  const { paymentMethods, shippingMethods } = paymentAndShipping
+
+  const hasAnyPaymentRestriction = Object.values(paymentMethods).some(v => v === true)
+  const hasAnyShippingRestriction = Object.values(shippingMethods).some(v => v === true)
+  // ✅ 如果完全沒有設定限制，視為通過
+  if (!hasAnyPaymentRestriction && !hasAnyShippingRestriction) return true
+
+  const normalizedPayment = normalizePaymentKey(selectedPayment)
+  const normalizedShipping = normalizeShippingKey(selectedShipping)
+  // ✅ 有限制時，檢查使用者選擇是否被允許
+  const isPaymentValid = hasAnyPaymentRestriction
+    ? !!paymentMethods[normalizedPayment]
+    : true
+
+  const isShippingValid = hasAnyShippingRestriction
+    ? !!shippingMethods[normalizedShipping]
+    : true
+
+  return isPaymentValid && isShippingValid
+}
+
+//主函式:(判斷優惠券是否可使用)
+export function isCouponUsable(coupon,user,ordersData,selectedPayment,selectedShipping,cartItems) {
+  return (
+    isCampaignUsable(coupon.campaign) &&
+    isTargetGroupUsable(coupon.targetGroup,user,ordersData) &&
+    isPromotionUsable(coupon.promotion,cartItems) &&
+    isPaymentAndShippingUsable(coupon.paymentAndShipping,selectedPayment,selectedShipping)
+  )
+}
+
+
+
+
+

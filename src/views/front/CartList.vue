@@ -54,11 +54,6 @@ export default {
     couponStore(){
       return useCouponStore()
     },
-   // (之後補上)
-    //計算差多少到滿額折扣
-    nextThreshold(){
-      return this.cartStore.nextThreshold
-    },
     selectAll: {
       get() {
         return this.cartStore.selectAll;//從 cartStore 中讀取 selectAll
@@ -76,7 +71,9 @@ export default {
     this.loading = false//載入購物車資料後將載入設定為 false  (之後補上)
     await this.cartStore.getCartData(); //取得目前使用者的購物車  /cartsdata格式
     console.log('API 載入後', this.cartStore.cartItems);
-    this.cartStore.setupWatchers()
+    // this.cartStore.setupWatchers()
+    this.cartStore.setupCartSyncWatcher()
+
 
   },
   
@@ -187,48 +184,47 @@ export default {
                 <div class="flex gap-3">
                   
                   <P>商品總價</P>
-                   <!-- 之後補上 -->
-                  <!-- <p>再購買 {{ nextThreshold }} 元享100折扣！</p> -->
-                  <!-- 再購買 {{ formatCurrency(nextThreshold) }} 元即可享100折扣！ -->
                 </div>
                 <span>{{ formatCurrency(cartStore.totalAmount) }}</span>
               </div>
-              <!-- 優惠卷 -->
-              <div v-if="cartStore.cartItems?.couponCode && isEligible(cartStore.cartItems.couponCode)" class="flex justify-between text-red-500">
-                <p>折價卷 滿 {{ cartStore.cartItems.couponCode.threshold}}折{{cartStore.cartItems.couponCode.discount}}</p>
-                <p> -{{ formatCurrency(cartStore.cartItems.couponCode.discount) }}</p>
+              <!-- 優惠券顯示（支援 amount / percent）-->
+              <div v-if="cartStore.cartItems?.coupon && isEligible(cartStore.cartItems.coupon)">
+                <div v-if="cartStore.cartItems.coupon.offerType === 'amount'" class="flex justify-between text-red-500">
+                  <p>折價券 滿 {{ cartStore.cartItems.coupon.threshold }} 元折 {{ formatCurrency(cartStore.cartItems.coupon.discount) }}元</p>
+                  <p>-{{ formatCurrency(cartStore.discountAmount) }}</p>
+                </div>
+
+                <div v-else-if="cartStore.cartItems.coupon.offerType === 'percent'" class="flex justify-between text-red-500">
+                  <p>折價券 滿 {{ cartStore.cartItems.coupon.threshold }} 元折 {{ cartStore.cartItems.coupon.discount }}%</p>
+                  <p>-{{ formatCurrency(cartStore.discountAmount) }}</p>
+                </div>
               </div>
+
               <!-- 運費 -->
               <div class="flex justify-between">
                 <p>運費總金額</p>
                 <!-- <p>{{formatCurrency(paymentStore.originalShippingFee)}}</p> -->
                 <p>{{ formatCurrency(cartStore.cartItems.freight) }}</p>
               </div>
-              <!-- 免運卷 -->
+              
+              <!-- 免運券折抵 -->
               <div v-if="cartStore.cartItems.freeShipping && isEligible(cartStore.cartItems.freeShipping)" class="flex justify-between text-red-500">
-                <p>運費折抵 滿 {{ cartStore.cartItems.freeShipping.threshold }} 折 {{ cartStore.cartItems.freeShipping.discount }}</p>
+                <p>
+                  運費折抵
+                  <span v-if="cartStore.cartItems.freeShipping.miniAmount">
+                    滿 {{ cartStore.cartItems.freeShipping.miniAmount }} 元
+                  </span>
+                  <span v-else-if="cartStore.cartItems.freeShipping.miniPieces">
+                    滿 {{ cartStore.cartItems.freeShipping.miniPieces }} 件
+                  </span>
+                  折 {{ cartStore.cartItems.freeShipping.discount }} 元
+                </p>
                 <p>-{{ formatCurrency(cartStore.cartItems.freeShipping.discount) }}</p>
               </div>
-              <!-- 運費 原本-->
-              <!-- <div class="flex justify-between items-center">
-                 <div class="flex gap-3">
-                  <p>運費</p>
-                  <div>
-                    <span 
-                      v-if="paymentStore.remainingForFreeShipping > 0" 
-                      class="text-red-600 border border-red-500 px-2 py-0.5 rounded text-xs font-medium">再購買 {{ formatCurrency(paymentStore.remainingForFreeShipping) }} 元即可享免運！
-                    </span>
-                    <span v-else 
-                      class="text-red-600 border border-red-500 px-2 py-0.5 rounded text-xs font-medium">滿{{ formatCurrency(paymentStore.selectedMethod.freeShippingThreshold) }}免運</span>
-                  </div>
-                </div>
-                <div>
-                  <span >+{{ formatCurrency(paymentStore.shippingFee) }}</span>
-                </div>
-              </div> -->
+
               <div class="flex justify-between items-center">
                 <p>預計付款金額總計</p>
-                <span>{{ formatCurrency(cartStore.cartItems.final_total) }}</span>
+                  <span>{{ formatCurrency(cartStore.finalTotal) }}</span>
               </div>
             </div>
 
@@ -253,15 +249,12 @@ export default {
                   <!-- <span>{{ selectAll }}</span> -->
                 </div>
                 <div class="flex flex-col gap-1">
-                  <!-- 之後補上 -->
-                  <!-- <div class="flex text-red-500 items-center">
-                    <p>折抵</p>
-                    <span>{{ 350 }}</span>
-                  </div> -->
                   <!-- class="flex items-center" -->
                   <div class="text-right">
                     <p class="text-xs text-gray-500 md:text-sm">預計付款總額:</p>
-                    <span class="text-lg md:text-xl font-bold text-blue-700">{{ formatCurrency(cartStore.cartItems.final_total) }}</span>
+                    <span class="text-lg md:text-xl font-bold text-blue-700">
+                         {{ formatCurrency(cartStore.finalTotal) }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -277,6 +270,7 @@ export default {
           </div>
        
       </div> 
+      
     </div>
   </div>  
 </template>

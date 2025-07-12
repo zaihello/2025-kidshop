@@ -10,44 +10,53 @@ import axiosInstance from '../services/axiosInstance'
 
 export const usePaymentStore =defineStore("payment",{
     state:() =>({
-        selectedPayment: "credit", // // 使用者選擇的付款方式 預設選中 信用卡
+        selectedPayment: "credit", // 使用者選擇的付款方式 預設選中 信用卡
+        selectedShipping:"home",//使用者選擇的取貨方式
         //付款方式
         paymentMethods: [
             {
-              value: "7-11",
+              value: "seven",//7-11
               name: "7-11 - 取貨付款",
-              description: "7-11：消費滿 1000 免運費，未滿酌收 50 元物流費。",
               logo: "7-11.png",
-            
             },
             {
               value: "familymart",
               name: "全家 - 取貨付款",
-              description: "全家：消費滿 1000 免運費，未滿酌收 50 元物流費。",
               logo: "familymart.png",
-             
             },
             {
-              value: "cod",
+              value: "cashOnDelivery",//cod
               name: "貨到付款",
-              description: "宅配：消費滿 1000 免運費，未滿酌收 60 元物流費。",
               logo: "",
-             
             },
             {
               value: "credit",
               name: "信用卡線上付款",
-              description: "宅配：消費滿 1000 免運費，未滿酌收 60 元物流費。",
               logo: "",
-             
             },
             {
               value: "linepay",
               name: "LINE Pay",
-              description: "(可用 LINE Points 折抵) 宅配：消費滿 1000 免運費，未滿酌收 60 元物流費。",
-              logo: "",
-             
+              logo: "",  
             }
+        ],
+        // 📦 取貨方式清單
+        shippingMethods:[
+          {
+            value:"home",
+            name:"宅配",
+            description:"黑貓宅配到府"
+          },
+          {
+            value:"seven",
+            name:"7-11 店到店",
+            description:"超商取貨付款",
+          },
+          {
+            value:"familymart",
+            name:"全家 店到店",
+            description:"超商取貨付款",
+          },
         ],
         //填寫表單資料
         orderInfo: {
@@ -74,13 +83,13 @@ export const usePaymentStore =defineStore("payment",{
           },
           //付款方式
           payment_info: {
-            method: '', // 根據選擇的付款方式 '貨到付款'、'信用卡線上付款'、'LINE Pay'信用卡線上付款
+            method: 'credit', // 根據選擇的付款方式 '貨到付款'、'信用卡線上付款'、'LINE Pay'信用卡線上付款
             transaction_id: '', // 付款成功後編號 TXN-1746272139893
             paid_at: null// 付款時間
           },
           //送貨資訊
           delivery_info: {
-            method: "", // 或 "7-11 取貨"
+            method: "home", // 或 "7-11 取貨"
             store: null, // 超商門市資訊（如果是超商才用到）
           },
           //發票資訊
@@ -114,6 +123,7 @@ export const usePaymentStore =defineStore("payment",{
         },
         selectedDiscountCouponId: null, // 折價券
         selectedFreeShippingCouponId: null, // 免運券
+        ordersData: [],//訂購資料
 
     }),
     getters:{
@@ -121,6 +131,10 @@ export const usePaymentStore =defineStore("payment",{
         selectedMethod(state) {
             return state.paymentMethods.find(m => m.value === state.selectedPayment) || null;
         },
+        selectedShippingMethod(state) {
+          return state.shippingMethods.find(m => m.value === state.selectedShipping) || null
+        },
+
         // 原始運費（你可根據邏輯設為固定值 60）
         originalShippingFee(){
           const cartStore = useCartStore()
@@ -128,18 +142,39 @@ export const usePaymentStore =defineStore("payment",{
           if(totalAmount === 0) return 0
           return 60
         },
-        // 折抵多少（根據免運券）
-        shippingDiscountAmount(){
+        // 折抵多少（根據免運券）原本 
+        // shippingDiscountAmount(){
+        //   const cartStore = useCartStore()
+        //   const couponStore = useCouponStore()
+        //   const totalAmount = cartStore.totalAmount
+
+        //   const coupon = couponStore.appliedFreeeShippingCoupon
+        //   if(coupon && totalAmount >= coupon.threshold){
+        //     return Math.min(60, coupon.discount || 0) // 折最多 60 元   
+        //   }
+        //   return 0
+        // },
+        // 折抵多少（根據免運券）1版 
+        shippingDiscountAmount() {
           const cartStore = useCartStore()
           const couponStore = useCouponStore()
-          const totalAmount = cartStore.totalAmount
 
-          const coupon = couponStore.appliedFreeeShippingCoupon
-          if(coupon && totalAmount >= coupon.threshold){
-            return Math.min(60, coupon.discount || 0) // 折最多 60 元   
+          const totalAmount = cartStore.totalAmount
+          const totalQuantity = cartStore.cartItems.items.reduce((sum, item) => sum + item.quantity, 0)
+
+          const coupon = couponStore.appliedFreeShippingCoupon
+          const thresholdAmount = Number(coupon?.miniAmount || 0)
+          const thresholdPieces = Number(coupon?.miniPieces || 0)
+
+          const meetsAmount = totalAmount >= thresholdAmount
+          const meetsPieces = totalQuantity >= thresholdPieces
+
+          if (coupon && (meetsAmount || meetsPieces)) {
+            return Math.min(60, Number(coupon.discount || 0))
           }
           return 0
         },
+
         // 最終運費
         finalShippingFee(){
           return Math.max(
@@ -147,12 +182,6 @@ export const usePaymentStore =defineStore("payment",{
           )
         },
         
-        //還差多少免運  考慮總金額免運問題、選擇支付的方式
-        // remainingForFreeShipping() {
-        //     const cartStore = useCartStore();
-        //     const totalAmount = cartStore.totalAmount;
-        //     return totalAmount >= this.selectedMethod.freeShippingThreshold ? 0 : this.selectedMethod.freeShippingThreshold - totalAmount;
-        // },
         //訂購人 全部的地址資訊
         getUserFullAddress() {
           const user = this.orderInfo.user_info;
@@ -176,7 +205,7 @@ export const usePaymentStore =defineStore("payment",{
             const response = await axios.get(`https://204ed3432b06d7af.mokky.dev/orders?userId=${userId}`, {
               headers: { Authorization: `Bearer ${token}` },
           });
-            const userOrder = response.data
+            this.ordersData = response.data
           }catch(err){
             console.error('取得訂單失敗', err);
           }
@@ -218,10 +247,11 @@ export const usePaymentStore =defineStore("payment",{
             status: "processing",//處理中
             // payment_status: "未付款",
             total:cartStore.cartItems.total,
-            couponCode:cartStore.cartItems.couponCode,
+            discountAmount: cartStore.discountAmount, // ✅ 折價卷折扣金額 
+            coupon:cartStore.cartItems.coupon,
             freight:this.originalShippingFee,
             freeShipping:cartStore.cartItems.freeShipping,
-            final_price: cartStore.cartItems.final_total,
+            final_price: cartStore.cartItems.final_total,//
 
             user_info: {
               name: this.orderInfo.user_info.name,
@@ -237,14 +267,15 @@ export const usePaymentStore =defineStore("payment",{
               comment: this.orderInfo.shipping_info.comment
             },
             payment_info: {
-              method: this.selectedMethod.name || "未知",
+              // method: this.selectedMethod.name || "未知",
+              method:this.selectedPayment,
               transaction_id: null,
               paid_at: null,
               status: "unpaid",//未付款
 
             },
             delivery_info: {
-              method: this.getDeliveryMethodFromPayment(this.selectedMethod.value), //例如：'黑貓宅配 - 常溫' 或 '7-11 取貨'
+              method:this.selectedShipping,
               store: this.orderInfo.delivery_info.store || null// 如果有超商門市
             },
             invoice_info: {
@@ -303,6 +334,8 @@ export const usePaymentStore =defineStore("payment",{
                 type:'discount',
                 axiosInstance
               })
+              console.log('🧾 627 selectedDiscountCouponId:', this.selectedDiscountCouponId);
+
             }
 
             //免運卷
@@ -394,14 +427,7 @@ export const usePaymentStore =defineStore("payment",{
             this.orderInfo.invoice_info.donationName = '財團法人「創世社會福利基金會」';
           }
         },
-        //付款方式取得對應的送貨方式
-        getDeliveryMethodFromPayment(paymentValue) {
-          if (["7-11", "familymart"].includes(paymentValue)) {
-            return "超商取貨";
-          } else {
-            return "黑貓宅配 - 常溫";
-          }
-        },
+       
         //orderInfo表單初始狀態(無任何資料，清空資料用)
         getDefaultOrderInfo() {
           return {

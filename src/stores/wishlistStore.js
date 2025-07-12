@@ -150,7 +150,7 @@ export const useWishlistStore = defineStore('wishlistStore', {
       this.wishlist = []; // 清空追蹤清單
       localStorage.removeItem('wishlist'); // 清空本地存儲
     },
-    //
+    //追蹤、取消狀態
     isInWishlist(productId) {
       return this.wishlist.some(item => item.product_Id === productId);
     }

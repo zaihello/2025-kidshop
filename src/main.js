@@ -46,8 +46,6 @@ import AccountOrderDetails from './views/front/AccountOrderDetails.vue'
 import CreditPayPage from './views/front/CreditPayPage.vue'
 // import AdminOrderDetail from './views/admin/OrdersManagement/AdminOrderDetail.vue'
 
-import test3 from './views/front/test3.vue'
-import test4 from './views/front/test4.vue'
 
 
 import AddCouponModal from './components/AddCouponModal.vue'
@@ -67,18 +65,6 @@ const routes = [
                 name:'AddCouponModal',
                 component:AddCouponModal
             },
-           
-            {
-                path:'test3',
-                name:'test3',
-                component:test3
-            },
-            {
-                path:'test4',
-                name:'test4',
-                component:test4
-            },
-           
             {
                 path:'',
                 name:'Home',

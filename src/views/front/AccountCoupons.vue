@@ -23,8 +23,11 @@ const invalidCoupons = computed(() => couponStore.invalidCoupons)
 
 onMounted(async() => {
   const user = authStore.user
-  await autoIssueAllCoupons({user,axiosInstance}),
+  await autoIssueAllCoupons({user,axiosInstance})
   await couponStore.getUserCoupons()
+  
+  // console.log('🎯 autoIssueAllCoupons 被呼叫', user.id)
+
 })
 
 </script>
@@ -42,8 +45,8 @@ onMounted(async() => {
       </button>
     </div>
 
-    <!-- <pre>{{ usableCoupons }}</pre> -->
-    <!-- <pre>{{ invalidCoupons }}</pre> -->
+    <!-- <pre>可使用{{ usableCoupons }}</pre> 
+   <pre>已失效{{ invalidCoupons }}</pre>  -->
     <div v-if="activeTab === 'usable'">
       <UsableCouponsPage
         :coupons="usableCoupons"

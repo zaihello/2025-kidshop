@@ -1,3 +1,4 @@
+<!-- 放updateExpiredUserCoupons在 AccountCoupons.vue-->
 <script setup>
 const props = defineProps({
     coupon:({
@@ -27,7 +28,8 @@ const emit = defineEmits(['copy'])
     </div>
 
     <div class="text-sm mb-2">
-      <div v-if="coupon.threshold">滿 {{ coupon.threshold }} 折 {{ coupon.discount }}</div>
+      <div v-if="coupon.offerType === 'amount'">滿 {{ coupon.threshold }} 元 折 {{ coupon.discount }} 元</div>
+      <div v-if="coupon.offerType === 'percent'">滿 {{ coupon.threshold }} 元 折 {{ coupon.discount }} %</div>
       <div v-if="coupon.validFrom && coupon.validTo">
         使用期限：{{ coupon.validFrom }} - {{ coupon.validTo }}
       </div>

@@ -12,11 +12,24 @@ const props = defineProps({
   }
 })
 
+
 const emit = defineEmits(['submitFreeShipping','close'])
 
 const handleClose = () => {
   emit('close')
 }
+
+const allCategories = ref([
+  { id: 1, name: '緊身衣' },
+  { id: 2, name: '毛衣' },
+  { id: 3, name: '玩具' },
+  { id: 4, name: '配件' },
+  { id: 5, name: '洋裝' },
+  { id: 6, name: '緊身褲' }
+])
+//指定商品用
+// const allProducts = ref([])
+// const searchKeyword = ref('')
 
 const form = reactive({
    //Accordion 1 - 基本資料
@@ -28,9 +41,11 @@ const form = reactive({
       conditionSubType: '',//miniAmount,miniPieces
     },
     conditionThreshold:{
-        miniAmount:'',// 最低金額門檻
+        miniAmount:'',// 最低金額門檻b
         miniPieces:'',// 最少件數門檻
     },
+    // selectedProducts:[],// ✅ 指定商品清單
+    selectedCategories:[],// ✅ 指定分類清單
   },
    //Accordion 2 - 目標群組
   targetGroup: {
@@ -66,7 +81,7 @@ const form = reactive({
       selectedReceiveMethod: '', // 'InCenter' | 'EnterCouponCode' | 'GetCoupons'
       // 顯示在領卷中心
       inCenter: {
-        customReceiveCondition: [],  // ['First', 'Birthday'] 等 value 陣列
+        // customReceiveCondition: [],  // ['First', 'Birthday'] 等 value 陣列
         usageLimit: '',       // 數字
         unlimited: false,
         code:'',
@@ -88,9 +103,9 @@ const form = reactive({
           showInMemberCenter: false,
           usageLimit:'',
           unlimited:false,
-          receiveStartDate: null,
-          receiveEndDate: null,
-          neverExpiresReceive: false,
+          // receiveStartDate: null,
+          // receiveEndDate: null,
+          // neverExpiresReceive: false,
           promotionStartDate: null,
           promotionEndDate:null,
           neverExpiresPromotion: false
@@ -99,9 +114,9 @@ const form = reactive({
         // 多組獨立代碼設定
         independent: {
           codes: [], // 例如輸入多筆代碼
-          receiveStartDate: null,
-          receiveEndDate: null,
-          neverExpiresReceive: false,
+          // receiveStartDate: null,
+          // receiveEndDate: null,
+          // neverExpiresReceive: false,
           promotionStartDate: null,
           promotionEndDate: null,
           neverExpiresPromotion: false
@@ -112,9 +127,9 @@ const form = reactive({
       getCoupons: {
         usageLimit: '',
         unlimited: false,
-        receiveStartDate: null,
-        receiveEndDate: null,
-        neverExpiresReceive: false,
+        // receiveStartDate: null,
+        // receiveEndDate: null,
+        // neverExpiresReceive: false,
         promotionStartDate: null,
         promotionEndDate: null,
         neverExpiresPromotion: false
@@ -142,43 +157,6 @@ const form = reactive({
   },
 
 })
-
-//促銷方案(可擴充)
-const receiveConditions = ref([{
-  label: '限首次購買',
-  value: 'First',
-  description: '限尚未成立過訂單的顧客使用'
-},
-{
-  label: '生日月可領',
-  value: 'Birthday',
-  description: '顧客生日當月可以領取並使用此優惠券'
-}])
-
-// 使用優惠卷>顯示在領卷中心>領取限制(4選一)
-const selected = computed(() => form.promotion.useCoupons.inCenter.customReceiveCondition)
-const usageLimit = computed(() => form.promotion.useCoupons.inCenter.usageLimit)
-const unlimited = computed(() => form.promotion.useCoupons.inCenter.unlimited)
-//  當「已填使用次數限制」或「勾選無限次數」時，自訂條件應該被禁用。
-const isCustomConditionDisabled = computed(() => usageLimit.value !== '' || unlimited.value)
-// 當「已選自訂條件」或「已勾選無限」時，使用次數輸入框應該被禁用。
-const isUsageLimitDisabled = computed(() => selected.value.length > 0 || unlimited.value)
-// 當「有自訂條件」或「有填使用次數限制」時，「無限次數」選項應該被禁用。
-const isUnlimitedDisabled = computed(() => selected.value.length > 0 || !!usageLimit.value)
-
-//使用優惠卷>顯示在領卷中心>領取限制 First input 和 Birthday input 不能同時存在
-watch(
-  () => form.promotion.useCoupons.inCenter.customReceiveCondition,
-  (newVal) => {
-    // 如果同時選了 First 和 Birthday，保留最後一個選擇，移除另一個
-    if (newVal.includes('First') && newVal.includes('Birthday')) {
-      const lastSelected = newVal[newVal.length - 1]
-      form.promotion.useCoupons.inCenter.customReceiveCondition =
-        lastSelected === 'First' ? ['First'] : ['Birthday']
-    }
-  },
-  { deep: true }
-)
 
 
 const selectedOption = ref('') //一般會員、VIP、VVIP(Accordion 2 - 目標群組)
@@ -227,6 +205,7 @@ const submitForm = async (formData = form) => {
             miniAmount:formData.campaign.conditionThreshold.miniAmount,
             miniPieces:formData.campaign.conditionThreshold.miniPieces    
         },
+        selectedCategories:formData.campaign.selectedCategories
       
       },
       //Accordion 2 - 目標群組
@@ -257,7 +236,7 @@ const submitForm = async (formData = form) => {
           selectedReceiveMethod: formData.promotion.useCoupons.selectedReceiveMethod,
 
           inCenter: {
-            customReceiveCondition:formData.promotion.useCoupons.inCenter.customReceiveCondition,
+            // customReceiveCondition:formData.promotion.useCoupons.inCenter.customReceiveCondition,
             usageLimit: formData.promotion.useCoupons.inCenter.usageLimit,
             unlimited: formData.promotion.useCoupons.inCenter.unlimited,
             code:formData.promotion.useCoupons.inCenter.code,
@@ -407,6 +386,20 @@ const removeSelectedTag = (index) => {
   form.targetGroup.tags.selectedTags.splice(index,1)
 }
 
+// 通用：輸入次數時清除無限選項
+const onUsageLimitInput = (target) => {
+  if(target.usageLimit !== ''){
+    target.unlimited = false
+  }
+}
+
+// 通用：勾選無限時清除次數
+const onUnlimitedChecked = (target) => {
+  if(target.unlimited){
+    target.usageLimit = ''
+  }
+}
+
 watch(
    //編輯、新增
   () => props.freeshippingData,
@@ -456,7 +449,7 @@ watch(
                     </div>
                     <div>
                         <div class="space-x-2">
-                            <input type="radio" id="part" value="part" v-model="form.campaign.basic.shippingType" name="type">
+                            <input type="radio" id="part" value="part" v-model="form.campaign.basic.shippingType" name="type" disabled>
                             <label for="part">部分商品免運</label>
                         </div>
                         <p class="ml-6 text-sm text-gray-600">選取商品之重量/件數將不計入運費計算</p>
@@ -467,7 +460,7 @@ watch(
                 <li v-if="form.campaign.basic.shippingType === 'all'" class="border-b border-gray-300 pb-4 space-y-3" >
                   <h4 class="">選擇生效條件類型</h4> 
                   <div class="space-x-2 ">
-                    <input type="radio" id="none" v-model="form.campaign.basic.selectedCondition" name="condition">
+                    <input type="radio" id="none" v-model="form.campaign.basic.selectedCondition" name="condition" disabled>
                     <label for="none">沒有條件</label>
                   </div>
                   <div class="flex items-center space-x-2">
@@ -486,7 +479,7 @@ watch(
                     </div>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <input type="radio" id="products" value="products" name="condition" v-model="form.campaign.basic.selectedCondition">
+                    <input type="radio" id="products" value="products" name="condition" v-model="form.campaign.basic.selectedCondition" disabled>
                     <label for="products">當指定商品達到...</label>
                     <div class="flex-1 min-h-[40px]">
                       <select 
@@ -540,6 +533,55 @@ watch(
                       </div>
                     </div>
                 </li>
+                <!-- 指定分類 -->
+                <div v-if="form.campaign.basic.selectedCondition === 'categories'" class="border p-4 mt-4">
+                  <h4 class="font-bold mb-2">選取指定分類</h4>
+                  <div>
+                    <div v-for="(category, index) in allCategories" :key="index" class="flex items-center">
+                      <input 
+                        type="checkbox"
+                        :id="'category-' + category.id"
+                        :value="category"
+                        v-model="form.campaign.selectedCategories"
+                      >
+                      <label :for="'category-' + category.id" class="ml-2">{{ category.name }}</label>
+                    </div>
+                  </div>
+                </div>
+                <!-- 指定商品 -->
+                <div v-if="form.campaign.basic.selectedCondition === 'products'" class="border p-4 mt-4">
+                  <h4 class="font-bold mb-2">選取指定商品</h4>
+
+                  <div class="mb-2">
+                    <input v-model="searchKeyword" type="text" placeholder="搜尋商品名稱或貨號" class="border px-2 py-1 w-full" />
+                  </div>
+
+                  <div class="overflow-x-auto max-h-64 border">
+                    <table class="min-w-full text-left">
+                      <thead>
+                        <tr>
+                          <th class="px-2 py-1">圖片</th>
+                          <th class="px-2 py-1">商品名稱</th>
+                          <th class="px-2 py-1">商品貨號</th>
+                          <th class="px-2 py-1">商品價格</th>
+                          <th class="px-2 py-1"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="product in filteredProductList" :key="product.id">
+                          <td><img :src="product.image" class="w-10 h-10 object-cover" /></td>
+                          <td>{{ product.name }}</td>
+                          <td>{{ product.sku }}</td>
+                          <td>{{ product.price }}</td>
+                          <td>
+                            <button @click="addSelectedProduct(product)" class="text-sm bg-blue-500 text-white px-2 py-1 rounded">加入</button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
               </ol>
             </transition>
           </div>
@@ -555,7 +597,7 @@ watch(
                 <li class="border-b border-gray-300 pb-4 space-y-3">
                   <h4>請選擇目標群組</h4>
                   <div class="space-x-2">
-                    <input type="radio" id="AllCustomers" value="all" v-model="form.targetGroup.selectedGroup" name="TargetGroup"class="">
+                    <input type="radio" id="AllCustomers" value="all" v-model="form.targetGroup.selectedGroup" name="TargetGroup" disabled>
                     <label for="AllCustomers" class="">所有顧客</label>
                   </div>
                   <div class="space-x-2">
@@ -563,7 +605,7 @@ watch(
                     <label for="Members">會員</label>
                   </div>
                   <div class="space-x-2">
-                    <input type="radio" id="DesignatedCustomer" value="tagged" v-model="form.targetGroup.selectedGroup" name="TargetGroup">
+                    <input type="radio" id="DesignatedCustomer" value="tagged" v-model="form.targetGroup.selectedGroup" name="TargetGroup" disabled>
                     <label for="DesignatedCustomer">指定顧客標籤</label>
                   </div>
                 </li>
@@ -594,7 +636,7 @@ watch(
                         <label for="AllMembmers" class="">所有會員</label>
                       </div>
                       <div class="space-x-2">
-                        <input type="radio" id="DesignatedMembers" value="MemberLevel" v-model="form.targetGroup.members.levelOption"  name="MemberGroup">
+                        <input type="radio" id="DesignatedMembers" value="MemberLevel" v-model="form.targetGroup.members.levelOption" name="MemberGroup" disabled>
                         <label for="DesignatedMembers">指定會員等級</label>
                       </div>
                     </div>
@@ -736,7 +778,7 @@ watch(
                 <li class="space-y-3 ">
                   <h4>選擇促銷方法</h4>
                   <div class="space-x-2">
-                    <input type="radio" id="automatic" value="automatic" v-model="form.promotion.selectedMethod" name="promotion">
+                    <input type="radio" id="automatic" value="automatic" v-model="form.promotion.selectedMethod" name="promotion" disabled>
                     <label for="automatic">自動套用優惠</label>
                   </div>
                   <div class="space-x-2" >
@@ -744,7 +786,7 @@ watch(
                     <label for="UseCoupons">使用優惠卷</label>
                   </div>
                   <div class="space-x-2">
-                    <input type="radio" id="RecommendedActivities" value="RecommendedActivities" v-model="form.promotion.selectedMethod" name="promotion">
+                    <input type="radio" id="RecommendedActivities" value="RecommendedActivities" v-model="form.promotion.selectedMethod" name="promotion" disabled>
                     <label for="RecommendedActivities">僅適用於推薦活動</label>
                   </div>
                 </li>
@@ -803,14 +845,15 @@ watch(
                   </div>
                   <div>
                     <div class="space-x-2">
-                      <input type="radio" id="EnterCouponCode" value="EnterCouponCode" v-model="form.promotion.useCoupons.selectedReceiveMethod" name="GetCoupons">
+                      <!-- disabled -->
+                      <input type="radio" id="EnterCouponCode" value="EnterCouponCode" v-model="form.promotion.useCoupons.selectedReceiveMethod" name="GetCoupons" disabled>
                       <label for="EnterCouponCode">輸入優惠卷代碼領取</label>
                     </div>
                     <p class="ml-6 text-sm text-gray-600">顧客可在網店前台的領卷中心和會員中心輸入代碼後領取，亦支援顧客在結帳時直接輸入代碼套用</p>
                   </div>
                   <div >
                     <div class="space-x-2">
-                      <input type="radio" id="GetCoupons" value="GetCoupons" v-model="form.promotion.useCoupons.selectedReceiveMethod" name="GetCoupons">
+                      <input type="radio" id="GetCoupons" value="GetCoupons" v-model="form.promotion.useCoupons.selectedReceiveMethod" name="GetCoupons" disabled>
                       <label for="GetCoupons">透過連結或顧客分群發送(領取型優惠卷)</label>
                     </div>
                     <p class="ml-6 text-sm text-gray-600">建立優惠卷連結後，顧客點擊後登入即可領取(每位會員限領取與使用一次)；亦可使用顧客分群發送優惠卷，直接將優惠卷歸戶至顧客身上</p>
@@ -843,27 +886,17 @@ watch(
                 <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                   <div class="space-y-2">
                     <label class="block">領取限制：</label>
-                    <div v-for="option in receiveConditions" :key="option.value" class="space-x-2">
-                      <input
-                        type="checkbox"
-                        :id="option.value"
-                        :value="option.value"
-                        v-model="form.promotion.useCoupons.inCenter.customReceiveCondition"
-                        :disabled="isCustomConditionDisabled"
-                      >
-                      <label :for="option.value">{{ option.label }}</label>
-                      <p class="ml-6 text-sm text-gray-600">{{ option.description }}</p>
-                    </div>
-                  </div>
+                  </div> 
 
-                  <h4>優惠卷使用上限</h4>
+                  <!-- <h4>優惠卷使用上限</h4> -->
                   <p>優惠可領取次數</p>
                   <div class="flex w-40">
                     <input 
                       type="text" 
                       v-model="form.promotion.useCoupons.inCenter.usageLimit" 
                       class="border border-gray-300 px-3 py-1 w-full rounded-l"
-                      :disabled="isUsageLimitDisabled"
+                      :disabled="form.promotion.useCoupons.inCenter.unlimited"
+                      @input="onUsageLimitInput(form.promotion.useCoupons.inCenter)"
                       >
                     <label class="border border-l-0 border-gray-300 bg-gray-100 px-3 py-1 flex items-center text-gray-600 rounded-r">次</label>
                   </div>
@@ -872,7 +905,7 @@ watch(
                       type="checkbox" 
                       id="unlimited" 
                       v-model="form.promotion.useCoupons.inCenter.unlimited"
-                      :disabled="isUnlimitedDisabled"
+                      @change="onUnlimitedChecked(form.promotion.useCoupons.inCenter)"
                       >
                     <label for="unlimited">無限</label>
                   </div>
@@ -882,7 +915,7 @@ watch(
                     <input type="text" v-model="form.promotion.useCoupons.inCenter.code" class="w-40 border border-gray-300 px-3 py-1 rounded" placeholder="例如:Happy慶新年888">
                   </div> 
                 </li>
-                <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
+                <!-- <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                   <h4>顯示在領卷中心</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
                     <div>
@@ -898,7 +931,7 @@ watch(
                       </div>  
                     </div>
                   </div>
-                </li>
+                </li> -->
                 <li v-if="form.promotion.useCoupons.selectedReceiveMethod === 'InCenter' && form.promotion.selectedMethod === 'UseCoupons'" class="space-y-3">
                   <h4>促銷限制</h4>
                   <div class="flex flex-col md:flex-row md:space-x-6">
@@ -1167,7 +1200,7 @@ watch(
             </button>
           </div>
         <!-- </form> -->
-      </div>
+    </div>
 </template>
 <style>
 .fade-enter-active, .fade-leave-active {

@@ -73,9 +73,8 @@ export default {
     console.log('API 載入後', this.cartStore.cartItems);
     // this.cartStore.setupWatchers()
     this.cartStore.setupCartSyncWatcher()
-
-
   },
+
   
 };
 </script>
@@ -230,8 +229,13 @@ export default {
 
             <div class="flex justify-end">
               <span class="text-right text-blue-400 py-2 cursor-pointer" @click="openCouponModal">選擇優惠券或輸入優惠代碼</span>
-              <SelectCouponModal v-if="showCouponModal" @close="closeCouponModal" @applyCoupon="applyCouponAndSync"/>
             </div>
+            <!-- modal -->
+            <SelectCouponModal 
+                v-if="showCouponModal" 
+                @close="closeCouponModal" 
+                @applyCoupon="applyCouponAndSync"
+            />
             <!-- 總計(總數)items-stretch左右高度一致 items-center bg-blue-200 bg-white-->
             <div class="flex flex-col md:flex-row items-stretch py-6md:px-6">
               <!-- 左側 -->

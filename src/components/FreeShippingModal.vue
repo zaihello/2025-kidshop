@@ -416,6 +416,8 @@ watch(
 </script>
 
 <template>
+<teleport to="#modals">
+  <div class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">  
     <div class="relative bg-white overflow-auto max-h-[90vh] w-full max-w-lg">
         <!-- X 關閉按鈕 -->
         <button @click="handleClose" class="absolute top-2 right-2 text-gray-500 hover:text-white text-xl font-bold">
@@ -1201,6 +1203,8 @@ watch(
           </div>
         <!-- </form> -->
     </div>
+  </div>  
+</teleport>  
 </template>
 <style>
 .fade-enter-active, .fade-leave-active {

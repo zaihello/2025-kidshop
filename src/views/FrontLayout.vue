@@ -147,8 +147,7 @@ export default{
                 <span class="material-icons">favorite</span>
                 <span class=" bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ wishlistCounts }}</span>
               </router-link>
-
-              
+       
               <router-link to="/cart/cartlist" class=" flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
                 <span class="material-icons">shopping_bag</span>
                 <span class=" bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ itemTypesCount }}</span>
@@ -204,4 +203,5 @@ export default{
     <!-- 頁腳 -->
     <FrontLayoutFooter />
   </div>
+  
 </template>

@@ -141,90 +141,7 @@ export function isFreeShippingFormValid(form){
         isFreeShippingPaymentAndShippingValid(form.paymentAndShipping)
     )
 }
-//判斷這個免運活動是否適用某位會員
-// 免運卷依目標群組(會員、會員等級)發送 前台使用流程 判斷用戶是否符合活動條件 1版(暫用)
-// export function isUserMatchedTargetGroup(user,targetGroup){
-//   if(!user || !targetGroup) return false
 
-//   const { selectedGroup,members,tags } = targetGroup
-//   // 所有顧客  
-//   if(selectedGroup === 'all'){
-//     return true
-//   }
-//   // 適用會員
-//   if(selectedGroup === 'members'){
-//     if(members.levelOption === 'All'){
-//       return true
-//     }
-//     if(members.levelOption === 'MemberLevel'){
-//       return members.selectedLevels.some(level => level.value === user.role)
-//     }
-//     return false
-//   }
-//   // 適用標籤
-//   if (selectedGroup === 'tagged') {
-//     if (!Array.isArray(tags.selectedTags) || tags.selectedTags.length === 0) return false;
-//     return tags.selectedTags.some(tag => user.tags?.includes(tag.value));
-//   }
-  
-//   return false
-// }
-// 原版
-// export function isFreeShippingCampaignConditionMet(campaign,cartItems) {
-//     if (!campaign || !cartItems || !Array.isArray(cartItems)) return false
-
-//     const { selectedCondition,conditionSubType } = campaign.basic || {}
-//     const { miniAmount,miniPieces } = campaign.conditionThreshold || {}
-//     //(暫時停用)無條件
-//     if(selectedCondition === 'none') {
-//         return true
-//     }
-//     // 全單達門檻（件數或金額）
-//     if(selectedCondition === 'reach'){
-//         const totalPieces = cartItems.reduce((sum,item) => sum + item.quantity,0)
-//         const totalAmount = cartItems.reduce((sum,item) => sum + item.subToyal,0)
-
-//         if(conditionSubType === 'miniPieces') {
-//             return totalPieces >= Number(miniPieces)
-//         }else if(conditionSubType === 'miniAmount') {
-//             return totalAmount >= Number(miniAmount)
-//         }
-//     }
-
-//     //(暫時停用) 指定商品達門檻（件數或金額）
-//     if (selectedCondition === 'products') {
-//         const productIds = (campaign.targetProducts || []).map(p => p.id); // 你需確認後台有設定此欄位
-//         const matchedItems = cartItems.filter(item => productIds.includes(item.product.id));
-
-//         const totalPieces = matchedItems.reduce((sum, item) => sum + item.quantity, 0);
-//         const totalAmount = matchedItems.reduce((sum, item) => sum + item.subTotal, 0);
-
-//         if (conditionSubType === 'miniPieces') {
-//             return totalPieces >= Number(miniPieces);
-//         } else if (conditionSubType === 'miniAmount') {
-//             return totalAmount >= Number(miniAmount);
-//         }
-//     }
-
-//     //  指定分類達門檻（件數或金額）
-//     if(selectedCondition === 'categories'){
-//         const targetCategoryIds = campaign.selectedCategories.map(c => c.id) || [];
-
-//         const matchedItems = cartItems.filter(item =>
-//             targetCategoryIds.includes(item.product.categoryId)
-//         );
-
-//         const totalPieces = matchedItems.reduce((sum,item) => sum + (item.quantity || 0),0)
-//         const totalAmount = matchedItems.reduce((sum,item) => sum + (item.subTotal || 0),0) 
-
-//        if (conditionSubType === 'miniPieces') {
-//             return totalPieces >= Number(miniPieces);
-//        } else if (conditionSubType === 'miniAmount') {
-//             return totalAmount >= Number(miniAmount);
-//        }
-//     }
-
-// }
 
 //1.判斷購物車是否符合免運門檻
 export function isFreeShippingCampaignConditionMet(campaign,cartItems) {
@@ -422,13 +339,6 @@ export function isFreeShippingUsable(
   currentDate = new Date(),
   usedCount = 0
 ) {
-//      console.log('🚚 7/10判斷免運券:', {
-//     promotionActive: isPromotionActive(promotion, currentDate, usedCount),
-//     conditionMet: isFreeShippingCampaignConditionMet(campaign, cartItems),
-//     targetGroupMatched: isUserMatchedTargetGroup(user, targetGroup),
-//     methodMatched: isPaymentAndShippingMethodMatched(paymentMethods, shippingMethods, userPayment, userShipping),
-    
-//   })
 
   return (
     isPromotionActive(promotion, currentDate, usedCount) &&

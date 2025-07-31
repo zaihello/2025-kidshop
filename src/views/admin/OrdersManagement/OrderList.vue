@@ -107,22 +107,23 @@ export default{
                 }
             }
         },
+     
         //付款狀態按鈕
-        togglePayment(order) {
+        async togglePayment(order) {
             // 切換狀態
             order.payment_info.status =
             order.payment_info.status === '已付款' ? '未付款' : '已付款'
-
+          try{
             // 👉 若你要發送 PATCH API 更新資料：
-            axios.patch(`https://204ed3432b06d7af.mokky.dev/orders/${order.id}`, {
-            payment_info: {
-                ...order.payment_info
-            }
-            }).then(() => {
-            console.log('付款狀態已更新')
-            }).catch(err => {
-            console.error('更新失敗', err)
+            await axios.patch(`https://204ed3432b06d7af.mokky.dev/orders/${order.id}`, {
+              payment_info: {
+                  ...order.payment_info
+              }
             })
+            console.log('付款狀態已更新')
+          }catch(err){
+            console.error('更新失敗', err)
+          }
         },
         //更新訂單狀態
         async updateOrderStatus(order) {

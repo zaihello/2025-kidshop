@@ -162,7 +162,7 @@ export default {
 
           <!-- 商品資料列 -->
           <div
-            v-for="item in cartStore.selectedtItems"
+            v-for="item in cartStore.selectedItems"
             :key="item.id"
             class="flex flex-col md:flex-row py-4 border-b gap-2"
           >

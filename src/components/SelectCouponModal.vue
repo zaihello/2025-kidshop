@@ -157,6 +157,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <teleport to="#modals">
    <div class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
         <div class="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-3 space-y-4">
             <h2 class="border-b pb-2 text-center">可使用的優惠券</h2>
@@ -252,4 +253,5 @@ onMounted(() => {
             </div>
         </div>     
    </div> 
+  </teleport> 
 </template>

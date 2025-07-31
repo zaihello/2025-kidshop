@@ -4,10 +4,10 @@
       <div class="w-full max-w-screen-xl m-auto">
         <!-- Email Subscription Section -->
         <div class="flex lg:flex-row items-center flex-col gap-4 w-80 md:w-4/5 lg:w-full m-auto py-6 border-b-2 border-stone-300">
-          <div class="lg:w-1/3 flex items-center">
+          <div v-once class="lg:w-1/3 flex items-center">
             <img src="/logo.svg" class="w-[240px] h-[70px] block" alt="Logo">
           </div>
-          <div class="flex items-center gap-3 lg:w-1/3 pr-10">
+          <div v-once class="flex items-center gap-3 lg:w-1/3 pr-10">
             <div class="relative w-12 h-12 bg-blue-700 rounded-full shrink-0">
               <img src="/mail.svg" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" alt="Mail Icon">
             </div>
@@ -48,7 +48,7 @@
             <li><a href="">About us</a></li>
             <li><a href="">Delivery & Return</a></li>
           </ul>
-          <ul class="lg:basis-1/4 md:w-1/2 flex flex-col gap-2 p-5">
+          <ul v-once class="lg:basis-1/4 md:w-1/2 flex flex-col gap-2 p-5">
             <li class="font-bold text-2xl">Got a question?</li>
             <li>Email: babyclothes@mail.com</li>
             <li>Call Us: (064) 332-1233</li>
@@ -63,7 +63,7 @@
     <!-- Copyright Section -->
     <div class="bg-stone-100 py-5">
       <div class="flex justify-between items-center flex-wrap gap-3 w-full xl:w-3/4 m-auto">
-        <p class="text-sm lg:text-base">Based on <a href=""><b>WoodMart</b></a> theme &copy; 2024 <a href=""><b>WooCommerce Themes.</b></a></p>
+        <p class="text-sm lg:text-base">Based on <a href=""><b>WoodMart</b></a> theme &copy; 2025 <a href=""><b>WooCommerce Themes.</b></a></p>
         <div class="flex justify-between items-center gap-10">
           <!-- object-center -->
           <img src="/payments.png" class="" alt="Payment Methods">
@@ -71,5 +71,5 @@
         </div>
       </div>
     </div>
-  </template>
+</template>
  

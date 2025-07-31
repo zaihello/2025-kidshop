@@ -194,6 +194,7 @@ export default{
 }
 </script>
 <template>
+<teleport to="#modals">
 <div
     v-if="adminProductStore.showProductModal"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 "
@@ -583,5 +584,6 @@ export default{
         </div>
     </div>
 </div>
+</teleport> 
 </template>
   

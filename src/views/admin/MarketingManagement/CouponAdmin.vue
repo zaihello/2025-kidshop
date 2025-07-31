@@ -192,7 +192,7 @@ onMounted(getCoupons)
     </tbody>
   </table>
   <!-- Modal -->
-  <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+  <div v-if="showModal">
     <AddCouponModal
      :couponData="currentCoupon"
      :is-editing="isEditing"

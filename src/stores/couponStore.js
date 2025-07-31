@@ -16,10 +16,6 @@ export const useCouponStore = defineStore('coupon',{
         manualCoupon:null,// ✅ 選擇手動輸入（通常是折價券）
         allCoupons: [],           // 原始 coupons
         allFreeshippings: [],      // 原始 freeshippings
-        //7/10
-        // selectedDiscountCouponId: null,
-        // selectedFreeShippingCouponId: null,
-
 
     }),
     actions:{
@@ -129,59 +125,6 @@ export const useCouponStore = defineStore('coupon',{
            const cartStore = useCartStore()
            return cartStore.cartItems.freeShipping || null
         },
-        //7/10
-//         selectedDiscountCouponComputed: (state) => {
-//   return state.filteredUsableCoupons.find(c => 
-//     c.id === state.selectedDiscountCouponId && c.offerType !== 'freeShipping'
-//   ) || null
-// },
-// selectedFreeShippingCouponComputed: (state) => {
-//   return state.filteredUsableCoupons.find(c => 
-//     c.id === state.selectedFreeShippingCouponId && c.offerType === 'freeShipping'
-//   ) || null
-// },
-
-        // 710
-   //代替watch
-  // filteredUsableCoupons: (state) => {
-  //   const cartStore = useCartStore()
-  //   const paymentStore = usePaymentStore()
-  //   const authStore = useAuthStore()
-  //   const selectedItems = cartStore.selectedItems
-  //   // const selectedItems = cartStore.cartItems.items.filter(item => item.selected)
-
-  //   const totalAmount = cartStore.totalAmount
-  //   const selectedPayment = paymentStore.orderInfo.payment_info.method
-  //   const selectedShipping = paymentStore.orderInfo.delivery_info.method
-  //   const user = authStore.user
-  //   const orders = cartStore.ordersData // 也可以在 store 中保存 ordersData
-
-  //   return state.usableCoupons.filter(coupon => {
-  //     if (coupon.offerType === 'freeShipping') {
-  //       return isFreeShippingUsable(
-  //         coupon.fullCouponData.promotion,
-  //         coupon.fullCouponData.campaign,
-  //         coupon.fullCouponData.paymentAndShipping.paymentMethods,
-  //         coupon.fullCouponData.paymentAndShipping.shippingMethods,
-  //         selectedShipping,
-  //         selectedPayment,
-  //         user,
-  //         coupon.fullCouponData.targetGroup,
-  //         selectedItems
-  //       )
-  //     } else {
-  //       return isCouponUsable(
-  //         coupon.fullCouponData,
-  //         user,
-  //         orders,
-  //         selectedPayment,
-  //         selectedShipping,
-  //         selectedItems
-  //       )
-  //     }
-  //   })
-  // }
-
 
     },
 })

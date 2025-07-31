@@ -44,6 +44,7 @@
   </script>
   
 <template>
+  <teleport to="#modals">
     <div
       v-if="isOpen"
       class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
@@ -127,4 +128,5 @@
         </div>
       </div>
     </div>
-  </template>
+  </teleport>  
+</template>

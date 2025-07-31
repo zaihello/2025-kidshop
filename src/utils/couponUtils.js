@@ -1,13 +1,11 @@
 import { isUserMatchedTargetGroup } from './freeShippingUtils'
-import { useCartStore } from '../stores/cartStore' 
 
-
-// 判斷折價卷是否為首次購買（根據 cartsData 判斷該 user 是否沒有已購買紀錄） 
+// 判斷折價卷是否為首次購買（根據 ordersData 判斷該 user 是否沒有已購買紀錄） 
 export function isFirstPurchase(userId,ordersData = []){
     const userOrders = ordersData.filter(order => order.user_id === userId && order.payment_info.status === 'paid')
 
-    console.log('userOrders:',userOrders)
-    // 若沒有購物車資料或購物車內無商品或未完成結帳，視為首次
+    // console.log('userOrders:',userOrders)
+    //訂單沒有付款過的視為首次
     return userOrders.length === 0
 }
 

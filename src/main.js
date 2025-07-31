@@ -46,6 +46,8 @@ import AccountOrderDetails from './views/front/AccountOrderDetails.vue'
 import CreditPayPage from './views/front/CreditPayPage.vue'
 // import AdminOrderDetail from './views/admin/OrdersManagement/AdminOrderDetail.vue'
 
+import test1 from './views/front/test1.vue'
+
 
 
 import AddCouponModal from './components/AddCouponModal.vue'
@@ -60,6 +62,11 @@ const routes = [
         component:FrontLayout,
         // redirect:'/shop',//點擊/admin轉跳到此頁
         children:[
+            {
+                path:'test1',
+                name:'test1',
+                component:test1,
+            },
             {
                 path:'AddCouponModal',
                 name:'AddCouponModal',

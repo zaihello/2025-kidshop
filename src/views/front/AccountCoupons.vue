@@ -26,7 +26,7 @@ onMounted(async() => {
   await autoIssueAllCoupons({user,axiosInstance})
   await couponStore.getUserCoupons()
   
-  // console.log('🎯 autoIssueAllCoupons 被呼叫', user.id)
+  // console.log(' autoIssueAllCoupons 被呼叫', user.id)
 
 })
 

@@ -3,12 +3,13 @@ import SwiperContact from '../../components/swiper/SwiperContact.vue'
 
 export default{
     components:{SwiperContact},
+  
 }
 </script>
 <template>
     <div class="w-full xl:w-3/4 p-6 m-auto pt-20 px-8">
         <!-- 區塊1 -->
-        <div class="flex flex-col w-full md:flex-row py-10 ">
+        <div  class="flex flex-col w-full md:flex-row py-10 ">
             <div class="md:w-1/2 ">
                 <h4 class="font-bold text-3xl pr-10">臺北市信義區東府路1號</h4>
                 <button type="button" class="flex gap-2 bg-blue-800 rounded px-5 py-3 text-white mt-7" >
@@ -65,5 +66,5 @@ export default{
     <div class="pb-20 px-8">
         <SwiperContact></SwiperContact>
     </div>
-    
+
 </template>

@@ -142,19 +142,7 @@ export const usePaymentStore =defineStore("payment",{
           if(totalAmount === 0) return 0
           return 60
         },
-        // 折抵多少（根據免運券）原本 
-        // shippingDiscountAmount(){
-        //   const cartStore = useCartStore()
-        //   const couponStore = useCouponStore()
-        //   const totalAmount = cartStore.totalAmount
-
-        //   const coupon = couponStore.appliedFreeeShippingCoupon
-        //   if(coupon && totalAmount >= coupon.threshold){
-        //     return Math.min(60, coupon.discount || 0) // 折最多 60 元   
-        //   }
-        //   return 0
-        // },
-        // 折抵多少（根據免運券）1版 
+        // 折抵多少（根據免運券）
         shippingDiscountAmount() {
           const cartStore = useCartStore()
           const couponStore = useCouponStore()

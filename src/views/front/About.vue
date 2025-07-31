@@ -70,7 +70,7 @@ export default{
           </div>
 
           <!-- 右側文字區（貼齊底部） -->
-          <div class="w-2/5 flex flex-col justify-end h-[500px]">
+          <div v-once class="w-2/5 flex flex-col justify-end h-[500px]">
             <p class="font-bold text-lg text-blue-800 mb-2">關於我們</p>
           
             <h2 class="text-4xl font-bold text-gray-600 leading-tight">
@@ -86,7 +86,7 @@ export default{
         </div>
 
         <!-- 小螢幕排版（圖片在上方 -->
-        <div class="lg:hidden">
+        <div v-once class="lg:hidden">
           <img
             class="w-full md:max-h-[580px] object-cover object-center mt-2 rounded-lg shadow-2xl"
             src="/about1.jpg.webp"
@@ -115,7 +115,7 @@ export default{
           />
         </div>
         <div class="lg:basis-5/12 lg:order-1">
-          <div class="border-b-2 flex flex-col gap-2 py-5">
+          <div v-once class="border-b-2 flex flex-col gap-2 py-5">
             <h3 class="font-bold text-3xl">認識我們的團隊</h3>
             <p>Websites in professional use templating systems. Commercial publishing platforms and content management systems ensure show.</p>
           </div>
@@ -134,7 +134,7 @@ export default{
       </div>
   
       <!-- 區塊3：工作流程 -->
-      <div class="flex flex-col lg:flex-row lg:gap-5 gap-12 my-10">
+      <div v-once class="flex flex-col lg:flex-row lg:gap-5 gap-12 my-10">
         <div>
           <img src="/about3.jpg.webp" class="w-full rounded-xl object-cover object-center h-[675px] lg:max-w-[700px]" alt="" />
           <h3 class="font-bold text-xl my-4">我們如何工作</h3>
@@ -148,8 +148,8 @@ export default{
       </div>
   
       <!-- 區塊4：FAQ 手風琴 -->
-      <div class="flex flex-col lg:flex-row bg-white">
-        <div class="lg:basis-2/5 mb-5">
+      <div  class="flex flex-col lg:flex-row bg-white">
+        <div v-once class="lg:basis-2/5 mb-5">
           <h4 class="font-bold text-3xl">您的一些問題在這裡得到解答</h4>
           <p class="my-5">我們收到很多關於我們課程的問題。您可以獲得任何答案。</p>
           <button type="button" class="py-3 px-5 border bg-blue-800 rounded-lg text-white text-sm">聯絡我們</button>

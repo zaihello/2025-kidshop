@@ -1,33 +1,30 @@
 <!-- 此為account 的側邊欄 頁面 -->
-<script>
-export default {
-  data(){
-    return{
-      breadcrumbTitle: ''//變動的
-    }
-  },
-  watch: {
-  $route: {
-    immediate: true,
-    //active 側邊攔 麵包屑變動
-    handler(to) {
-      const path = to.path
-      if (path.includes('/account/wishes')) {
-        this.breadcrumbTitle = '我的收藏'
-      } else if (path.includes('/cart')) {
-        this.breadcrumbTitle = '我的購物車'
-      } else if (path.includes('/account/coupons')) {
-        this.breadcrumbTitle = '領取優惠券'
-      } else if (path.includes('/account/orders')) {
-        this.breadcrumbTitle = '歷史訂單資料'
-      } else {
-        this.breadcrumbTitle = ''
-      }
-    }
-  }
-}
+<script setup>
+import { ref,watch } from 'vue'
+import { useRoute } from 'vue-router' 
 
-}
+const route = useRoute()
+const breadcrumbTitle = ref('')
+
+const menuData =[
+  {title:'我的收藏',path:'/account/wishes'},
+  {title:'我的購物車',path:'/cart'},
+  {title:'領取優惠卷',path:'/account/coupons'},
+  {title:'紅利點數',path:'/account/points'},
+  {title:'歷史訂單資料',path:'/account/orders'}
+
+]
+
+// 麵包屑切換
+watch(
+  () => route.path,
+  (path) => {
+    const match = menuData.find(item => path.includes(item.path))
+    //根據path找到對應的title
+    breadcrumbTitle.value = match?.title || ''
+  },
+  {immediate:true}
+)
 </script>
 
 <template>
@@ -49,22 +46,16 @@ export default {
 
     <!-- Mobile Tab Navigation -->
     <div class="block lg:hidden mb-6">
-      <nav class="flex justify-around bg-orange-400 border rounded-lg shadow-sm overflow-hidden text-sm font-medium">
-        <router-link to="/account/wishes" class="w-full text-center py-3 hover:bg-orange-300" active-class="bg-orange-700 text-white">
-          收藏
-        </router-link>
-        <router-link to="/cart" class="w-full text-center py-3 hover:bg-orange-300" active-class="bg-orange-700 text-white">
-          購物車
-        </router-link>
-        <router-link to="/account/coupons" class="w-full text-center py-3 hover:bg-orange-300" active-class="bg-orange-700 text-white">
-          優惠券
-        </router-link>
-        <router-link to="/account/points" class="w-full text-center py-3 hover:bg-orange-300" active-class="bg-orange-700 text-white">
-          紅利點數
-        </router-link>
-        <router-link to="/account/orders" class="w-full text-center py-3 hover:bg-orange-300" active-class="bg-orange-700 text-white">
-          訂單
-        </router-link>
+      <nav class="flex justify-around bg-orange-400  border rounded-lg shadow-sm overflow-hidden text-sm font-medium">
+          <router-link 
+            v-for="item in menuData"
+            :key="item.path"
+            :to="item.path" 
+            class="w-full text-center py-3 hover:bg-orange-300" 
+            active-class="bg-orange-700 text-white"
+          >
+            {{item.title}}
+          </router-link>     
       </nav>
     </div>
 
@@ -73,29 +64,17 @@ export default {
       <!-- Sidebar -->
       <div class="hidden lg:block w-1/6">
         <ul class="bg-orange-400 border rounded-xl shadow-md divide-y divide-gray-100">
-          <li>
-            <router-link to="/account/wishes" class="block px-5 py-3 text-gray-800 hover:bg-orange-300 hover:text-white transition-colors duration-200 text-lg font-medium rounded-t-xl" active-class="bg-orange-700 text-white">
-              我的收藏
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/cart" class="block px-5 py-3 text-gray-800 hover:bg-orange-300 hover:text-white transition-colors duration-200 text-lg font-medium" active-class="bg-orange-700 text-white">
-              我的購物車
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/account/coupons" class="block px-5 py-3 text-gray-800 hover:bg-orange-300 hover:text-white transition-colors duration-200 text-lg font-medium" active-class="bg-orange-700 text-white">
-              領取優惠券
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/account/points" class="block px-5 py-3 text-gray-800 hover:bg-orange-300 hover:text-white transition-colors duration-200 text-lg font-medium" active-class="bg-orange-700 text-white">
-              紅利點數
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/account/orders" class="block px-5 py-3 text-gray-800 hover:bg-orange-300 hover:text-white transition-colors duration-200 text-lg font-medium rounded-b-xl" active-class="bg-orange-700 text-white">
-              歷史訂單資料
+          <li v-for="(item,index) in menuData" :key=item.path>
+            <router-link 
+              :to="item.path" 
+              class="block px-5 py-3 text-gray-800 hover:bg-orange-300 hover:text-white transition-colors duration-200 text-lg font-medium " 
+              :class="{
+                'rounded-t-xl':index === 0,
+                'rounded-b-xl':index === menuData.length - 1
+              }"
+              active-class="bg-orange-700 text-white"
+            >
+              {{ item.title }}
             </router-link>
           </li>
         </ul>

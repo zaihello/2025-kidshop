@@ -70,7 +70,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
         // 計算啟用的產品數量
         enabledProductCount: (state) => state.adminProducts.filter(p => p.is_enabled === true).length,
        
-        //新增/編輯/刪除視窗開的true
+        //新增/編輯/刪除視窗開的true //可刪?
         isModalOpen: (state) =>{
             return   state.showDeleteModal || state.showProductModal
         },

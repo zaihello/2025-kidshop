@@ -1,50 +1,73 @@
-<script>
+<!-- 原版 -->
+<script setup>
+import { ref,watch,onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAdminProductStore } from '../../stores/adminProductStore'
 import { useAdminAuthStore } from '../../stores/adminAuthStore'
 
-export default{
-    data(){
-      return{
-        activeMenus: { // 確保有預設 key，避免 Vue 無法監聽 (追蹤展開的下拉選單)
-          products: false,
-          orders: false,
-          users: false,
-          marketing:false,
-        }
-      }
-    },
-    computed:{
-        adminProductStore(){
-            return useAdminProductStore()
-        },
-        adminAuthStore(){
-          return useAdminAuthStore()
-        },
-      
-        currentPath() {
-          return this.$route.path;
-        },
-    },
-    methods:{
-      // 直接切換當前選單的展開/收起狀態，不影響其他選單
-      toggleMenu(menu) {
-        
-        this.activeMenus[menu] = !this.activeMenus[menu];
-      },
-      isActive(path) {
-        return this.currentPath.startsWith(path);
-      },
-    },
-    watch: {
-        'adminProductStore.isModalOpen'(isOpen) {
-            document.body.style.overflow = isOpen ? 'hidden' : ''; // 新增/編輯/刪除視窗開啟時禁止滾動
-        }
-    },
-    mounted(){
-        this.adminProductStore.getAdminProducts();
-       
-    },
+const adminProductStore = useAdminProductStore()
+const adminAuthStore = useAdminAuthStore()
+const route = useRoute()
+
+const menuDate = [
+  {
+    key:'products',
+    title:'產品管理',
+    children:[
+      { key:'products-list',title:'產品列表',path:'/admin/products' },
+    ]
+  },
+  {
+    key:'orders',
+    title:'訂單管理',
+    children:[
+      {key:'orders-list',title:'訂單列表',path:'/admin/orders'}
+    ]
+  },
+  {
+    key:'users',
+    title:'用戶管理',
+    children:[
+      {key:'admins',title:'管理員列表',path:'/admin/users/admins'},
+      {key:'members',title:'會員列表',path:'/admin/users/members'},
+    ]
+  },
+  {
+    key:'marketing',
+    title:'行銷管理',
+    children:[
+      {key:'coupons',title:'滿額滿件優惠',path:'/admin/marketing/coupons'},
+      {key:'freeshipping',title:'免運費',path:'/admin/marketing/freeshipping'},
+    ]
+  },
+]
+// 控制各選單展開/收合狀態
+const activeMenus = ref({})
+
+menuDate.forEach(menu => {
+  activeMenus.value[menu.key] = false
+})
+// 切換展開狀態
+const toggleMenu = (key) =>{
+  activeMenus.value[key] = !activeMenus.value[key]
 }
+// 判斷路由是否啟用
+const isActive = (path) =>{
+  return route.path.startsWith(path)
+}
+// 控制 modal 開啟時禁止滾動
+watch(
+  () => adminProductStore.isModalOpen,
+  (isOpen) => {
+    document.body.style.overflow = isOpen ? 'hidden' : ''; // 新增/編輯/刪除視窗開啟時禁止滾動
+  }
+)
+// 初始載入資料
+onMounted(() => {
+  adminProductStore.getAdminProducts()
+})
+
+
 </script>
 
 <template>
@@ -54,96 +77,21 @@ export default{
     <div class="flex flex-col md:flex-row gap-6">
       <!-- Sidebar -->
       <nav class="w-full md:w-1/4 bg-white border border-gray-300 rounded-xl shadow-sm p-4 space-y-6">
-        <!-- 產品管理 -->
-        <div>
-          <button @click="toggleMenu('products')" 
-                  class="flex justify-between items-center w-full py-3 px-2 text-gray-800 hover:bg-gray-100 rounded-md font-semibold">
-            產品管理
-            <span>{{ activeMenus.products ? '▲' : '▼' }}</span>
-          </button>
-          <ul v-show="activeMenus.products" class="pl-4 mt-2 space-y-2">
-            <li>
-              <router-link to="/admin/products"
-                class="block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700"
-                :class="{ 'bg-orange-200 font-bold': isActive('/admin/products') }">
-                產品列表
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 訂單管理 -->
-        <div>
-          <button @click="toggleMenu('orders')"
-                  class="flex justify-between items-center w-full py-3 px-2 text-gray-800 hover:bg-gray-100 rounded-md font-semibold">
-            訂單管理
-            <span>{{ activeMenus.orders ? '▲' : '▼' }}</span>
-          </button>
-          <ul v-show="activeMenus.orders" class="pl-4 mt-2 space-y-2">
-            <li>
-              <router-link to="/admin/orders"
-                class="block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700"
-                :class="{ 'bg-orange-200 font-bold': isActive('/admin/orders') }">
-                訂單列表
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 用戶管理 -->
-        <div>
-          <button @click="toggleMenu('users')"
-                  class="flex justify-between items-center w-full py-3 px-2 text-gray-800 hover:bg-gray-100 rounded-md font-semibold">
-            用戶管理
-            <span>{{ activeMenus.users ? '▲' : '▼' }}</span>
-          </button>
-          <ul v-show="activeMenus.users" class="pl-4 mt-2 space-y-2">
-            <li>
-              <router-link to="/admin/users/admins"
-                class="block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700"
-                :class="{ 'bg-orange-200 font-bold': isActive('/admin/users/admins') }">
-                管理員列表
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/admin/users/members"
-                class="block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700"
-                :class="{ 'bg-orange-200 font-bold': isActive('/admin/users/members') }">
-                會員列表
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 行銷管理 -->
-        <div>
+        
+        <div v-for="menu in menuDate" :key="menu.key">
           <button 
-            @click="toggleMenu('marketing')"
+            @click="toggleMenu(menu.key)" 
             class="flex justify-between items-center w-full py-3 px-2 text-gray-800 hover:bg-gray-100 rounded-md font-semibold">
-            行銷管理
-            <span>{{ activeMenus.marketing ? '▲' : '▼' }}</span>
+            {{ menu.title }}
+            <span>{{ activeMenus[menu.key] ? '▲' : '▼' }}</span>
           </button>
-          <ul v-show="activeMenus.marketing" class="pl-4 mt-2 space-y-2">
-            <li>
+          <ul v-show="activeMenus[menu.key]" class="pl-4 mt-2 space-y-2">
+            <li v-for="item in menu.children" :key="item.path">
               <router-link 
-                to="/admin/marketing/coupons"
-                :class="[
-                  'block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700',
-                  isActive('/admin/marketing/coupons') ? 'bg-orange-200 font-bold' : ''
-                ]"
-              >
-                滿額滿件優惠
-              </router-link>         
-            </li>
-            <li>
-              <router-link
-                to="/admin/marketing/freeshipping"
-                :class="[
-                  'block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700',
-                  isActive('/admin/marketing/freeshipping') ? 'bg-orange-200 font-bold' : ''
-                ]"
-              >
-                免運費
+                :to="item.path"
+                class="block py-2 px-4 rounded-md hover:bg-orange-100 text-gray-700"
+                :class="{ 'bg-orange-200 font-bold': isActive(item.path) }">
+                {{ item.title }}
               </router-link>
             </li>
           </ul>

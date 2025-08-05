@@ -13,7 +13,8 @@
   </header>
   <body>
     <div id="app"></div>
-    <div id="modals"></div><!-- 所有 modal 都會被插入這裡 -->
+     <!-- 放置彈窗 (modal) 的容器，搭配 Teleport 或元件掛載在 body 之外的情況下使用（例如：Vuetify、Element UI 的 Dialog）。 -->
+    <div id="modals"></div><!-- 所有 modal 都會被插入slot這裡 -->
     <!-- <script type="module" src="/src/main.js"></script> -->
     <script type="module" src="./src/main.js"></script>
   </body>

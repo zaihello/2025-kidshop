@@ -46,7 +46,6 @@ import AccountOrderDetails from './views/front/AccountOrderDetails.vue'
 import CreditPayPage from './views/front/CreditPayPage.vue'
 // import AdminOrderDetail from './views/admin/OrdersManagement/AdminOrderDetail.vue'
 
-import test1 from './views/front/test1.vue'
 
 
 
@@ -62,11 +61,6 @@ const routes = [
         component:FrontLayout,
         // redirect:'/shop',//點擊/admin轉跳到此頁
         children:[
-            {
-                path:'test1',
-                name:'test1',
-                component:test1,
-            },
             {
                 path:'AddCouponModal',
                 name:'AddCouponModal',
@@ -287,28 +281,19 @@ const routes = [
 
 const app = createApp(App)
 const pinia = createPinia();
-
 // const router = createRouter({
 //     history:createWebHistory(),
 //     routes
 // })
-
 const router = createRouter({
     history: createWebHashHistory(), // ← 改成 hash 模式
     routes,
-  })
-  
-
-// 註冊 Pinia 和 Router
-app.use(router)
+})
+// 註冊 Pinia 和 Router 插件
 app.use(pinia);
-
-
+app.use(router)
 // 將 Router 傳遞給 Store
 // const wishlistStore = useWishlistStore(); 5/4
 // wishlistStore.setRouter(router);
-
-
-
+//掛載
 app.mount('#app')
-

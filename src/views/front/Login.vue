@@ -63,7 +63,7 @@ export default{
               v-model="form.email"
               type="email"
               id="email"
-              placeholder="請輸入您的 email"
+              placeholder="1263@gmail.com"
               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
             />
             <span class="text-red-500 text-sm">{{ errors.email }}</span>

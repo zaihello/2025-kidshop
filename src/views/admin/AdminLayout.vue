@@ -73,7 +73,7 @@ onMounted(() => {
 <template>
   <div :class="{ 'overflow-hidden': adminProductStore.isModalOpen }" class="w-full 2xl:w-3/4 2xl:m-auto p-6">
     
-    <p class="text-xl font-semibold text-gray-700 mb-8">{{ adminAuthStore.adminName }} 管理員，登入中～</p>
+    <p class="text-xl font-semibold text-gray-700 mb-8">{{ adminAuthStore.adminName }} <span class="text-red-500">登入中</span></p>
     <div class="flex flex-col md:flex-row gap-6">
       <!-- Sidebar -->
       <nav class="w-full md:w-1/4 bg-white border border-gray-300 rounded-xl shadow-sm p-4 space-y-6">

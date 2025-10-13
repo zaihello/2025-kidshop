@@ -78,6 +78,7 @@ export default{
     },
     mounted(){
       this.cartStore.getCartData();
+     
     }
 }
    
@@ -100,10 +101,14 @@ export default{
         </router-link>
 
         <!-- 購物車（小螢幕） -->
-        <router-link to="/cart/cartlist" class="relative text-gray-600">
+        <router-link to="/cart/cartlist" class="flex gap-1 text-gray-600" :class="{invisible:!authStore.isLoggedIn}">
+         <p class="font-black text-xl">{{ authStore.user?.name }}</p>
+         <div class="relative">
           <span class="material-icons">shopping_bag</span>
           <span class="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ itemTypesCount }}</span>
+         </div> 
         </router-link>
+
       </div>
 
       <!-- 大螢幕導覽列 class="hidden lg:flex items-center justify-between px-8 py-4 bg-orange-100"-->
@@ -135,6 +140,7 @@ export default{
 
           <!-- 右邊操作 -->
           <div class="flex gap-4 items-center">
+            <p class="font-black text-xl">{{ authStore.user?.name }}</p>
             <div v-if="!authStore.isLoggedIn"class="flex gap-6">
               <router-link to="/login" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">登入</router-link>
               <router-link to="/signup" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">註冊</router-link>
@@ -167,9 +173,10 @@ export default{
       enter-to-class="translate-x-0 opacity-100"
       leave-from-class="translate-x-0 opacity-100"
       leave-to-class="-translate-x-full opacity-0"
+      
     >
       <aside v-if="isSidebarOpen" class="fixed inset-0 z-50 flex">
-        <div class="w-64 bg-white shadow-lg p-4 space-y-4">
+        <div class="w-64 bg-white shadow-lg p-4 space-y-4 overflow-y-auto">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-bold">選單</h2>
             <button @click="toggleSidebar" class="text-gray-500">X</button>
@@ -201,7 +208,31 @@ export default{
     </main>
 
     <!-- 頁腳 -->
-    <FrontLayoutFooter />
+    <footer>
+      <FrontLayoutFooter />
+    </footer>
+
+    <!-- 底部導覽列: 登入才顯示的小螢幕導覽列 登出、追蹤清單、我的帳號 -->
+    <div 
+    :class="{hidden:!authStore.isLoggedIn}"
+    class="sticky bottom-0 z-50 px-4 py-4 bg-white shadow-md flex flex-row shadow-top-only lg:hidden">
+      <button @click="handleLogout" class="basis-1/2 h-10 text-gray-600 transition-colors duration-200 hover:text-blue-600">登出</button>
+
+      <router-link to="/account/wishes" class="basis-1/2 h-10 flex items-center justify-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">
+        <span class="material-icons">favorite</span>
+        <span class=" bg-blue-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">{{ wishlistCounts }}</span>
+      </router-link>
+
+    </div>
+
   </div>
   
 </template>
+
+<style scoped>
+.shadow-top-only {
+  box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.1),
+              0 -2px 4px -2px rgba(0,0,0,0.06);
+}
+</style>
+

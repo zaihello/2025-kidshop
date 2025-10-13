@@ -62,10 +62,9 @@
   
     <!-- Copyright Section -->
     <div class="bg-stone-100 py-5">
-      <div class="flex justify-between items-center flex-wrap gap-3 w-full xl:w-3/4 m-auto">
+      <div class="flex justify-center flex-wrap lg:justify-between lg:items-center gap-3 w-full xl:w-3/4 m-auto">
         <p class="text-sm lg:text-base">Based on <a href=""><b>WoodMart</b></a> theme &copy; 2025 <a href=""><b>WooCommerce Themes.</b></a></p>
         <div class="flex justify-between items-center gap-10">
-          <!-- object-center -->
           <img src="/payments.png" class="" alt="Payment Methods">
           <router-link to="/admin/login" class="cursor-pointer hover:text-orange-600">後台管理</router-link>
         </div>

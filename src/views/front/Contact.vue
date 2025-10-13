@@ -45,19 +45,18 @@ export default{
                 </div>
             </div>
             <div class="md:w-1/2 ">
-                <form action="" class="w-full flex flex-col gap-5 ">
-                    <h4 class="font-bold text-2xl mb-2">聯絡我們</h4>
-                        <div class="flex gap-10 ">
-                            <input type="text" placeholder="First name" class="outline-none border w-full py-2 px-3 rounded border border-slate-300">
-                            <input type="text" placeholder="Last name" class="outline-none border border-slate-300 w-full py-2 px-3 rounded">
+                <form action="" class="w-full flex flex-col gap-5 p-6 bg-white rounded-lg shadow-md ">
+                    <h4 class="font-bold text-2xl text-gray-800">聯絡我們</h4>
+                        <div class="">
+                            <input type="text" placeholder="姓名" class="outline-none border border-gray-300 w-full py-2 px-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
                         </div>
                         <div class="">
-                            <input type="email"placeholder="Email" class="outline-none birder border-slate-300 w-full py-2 px-3 rounded border">
+                            <input type="email"placeholder="Email" class="outline-none border border-gray-300 w-full py-2 px-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
                         </div>
                         <div>
-                            <textarea name="" rows="10" cols="30" id="" placeholder="Your Message border"   class="outline-none w-full py-2 px-3  rounded border border-slate-300"></textarea>
+                            <textarea name="" rows="10" cols="30" id="" placeholder="輸入要跟我們說的話..." class="outline-none border border-gray-300 w-full py-2 px-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition resize-none"></textarea>
                         </div>
-                        <button type="button" class="w-40 py-2 bg-blue-800 text-white rounded" >發送訊息</button>
+                        <button type="button" class="w-40 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg shadow-md transition-all" >發送訊息</button>
                 </form>
             </div>
         </div>

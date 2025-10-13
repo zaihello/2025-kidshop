@@ -1,3 +1,74 @@
+<script>
+  import { useProductStore } from '../../stores/productStore'
+  import { Swiper, SwiperSlide } from 'swiper/vue';
+  // Import Swiper styles
+  import 'swiper/css';
+  import 'swiper/css/navigation';
+  // import required modules
+  import { Navigation } from 'swiper/modules';
+    
+  export default {
+    components: {
+      Swiper,
+      SwiperSlide,
+    },
+    data(){
+      return{
+        categoryItems: [
+          {
+            name: '緊身衣',
+            image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-growsuit-11-1.jpg',
+          },
+          {
+            name: '毛衣',
+            image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-jumpers-5-1.jpg',
+          },
+          {
+            name: '玩具',
+            image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-toys-3-1.jpg',
+          },
+          {
+            name: '配件',
+            image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-accessories-2-1.jpg',
+          },
+          {
+            name: '洋裝',
+            image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-dresses-3-1.jpg',
+          },
+          {
+            name: '緊身褲',
+            image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-leggings-3-1.jpg',
+          },
+        ],
+        modules: [Navigation],
+      }
+    },
+    methods:{
+      // 切換類別時更新網址參數
+      navigateToCategory(category) {
+        // 更新路由參數
+        this.$router.push({
+          path: this.$route.path,
+          query: { ...this.$route.query, category: category.toLowerCase(), page: 1 }
+        });
+
+        // 通知 store 更新狀態
+      this.productStore.updateCategory(category);
+      },
+    }, 
+    computed:{
+      productStore(){
+        return useProductStore()
+      },
+        // 計算前台每個類別的商品數量(以啟用商品)(放在computed數據自動重新計算)
+      categoryCounts(){
+        return this.productStore.categoryCounts(this.categoryItems);
+      },
+    },
+      
+  };
+</script>
+    
 <template> 
     <!-- 外框設定輪播的寬度 -->
     <div class="w-3/4 m-auto ">
@@ -59,117 +130,41 @@
     </div>
     
 </template>
-    
-    <script>
-    import { useProductStore } from '../../stores/productStore'
-      import { Swiper, SwiperSlide } from 'swiper/vue';
-      // Import Swiper styles
-      import 'swiper/css';
-      import 'swiper/css/navigation';
-      // import required modules
-      import { Navigation } from 'swiper/modules';
-    
-      export default {
-        components: {
-          Swiper,
-          SwiperSlide,
-        },
-        data(){
-          return{
-            categoryItems: [
-              {
-                name: '緊身衣',
-                image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-growsuit-11-1.jpg',
-              },
-              {
-                name: '毛衣',
-                image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-jumpers-5-1.jpg',
-              },
-              {
-                name: '玩具',
-                image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-toys-3-1.jpg',
-              },
-              {
-                name: '配件',
-                image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-accessories-2-1.jpg',
-              },
-              {
-                name: '洋裝',
-                image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-dresses-3-1.jpg',
-              },
-              {
-                name: '緊身褲',
-                image: 'https://woodmart.b-cdn.net/kids/wp-content/uploads/sites/13/2023/05/w-bcs-leggings-3-1.jpg',
-              },
-            ],
-            modules: [Navigation],
-          }
-        },
-        methods:{
-          // 切換類別時更新網址參數
-          navigateToCategory(category) {
-            // 更新路由參數
-            this.$router.push({
-              path: this.$route.path,
-              query: { ...this.$route.query, category: category.toLowerCase(), page: 1 }
-            });
-
-            // 通知 store 更新狀態
-          this.productStore.updateCategory(category);
-          },
-        }, 
-        computed:{
-          productStore(){
-            return useProductStore()
-          },
-            // 計算前台每個類別的商品數量(以啟用商品)(放在computed數據自動重新計算)
-          categoryCounts(){
-            return this.productStore.categoryCounts(this.categoryItems);
-          },
-        },
       
-      };
-    </script>
+<style scoped>
+  .swiper-button-next{
+    width: 60px;
+    height: 60px;
+    right: 0px;
+    /* 隱藏原生的藍色箭頭 */
+    /* text-indent:把箭頭移到外框去 */
+    text-indent:160%;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .swiper-button-prev{
+    width: 60px;
+    height: 60px; 
+    left: 0px;
     
-     <style scoped>
-       .swiper-button-next{
-         width: 60px;
-         height: 60px;
-         right: 0px;
-         /* 隱藏原生的藍色箭頭 */
-         /* text-indent:把箭頭移到外框去 */
-         text-indent:160%;
-         white-space:nowrap;
-         overflow:hidden;
-       }
-       .swiper-button-prev{
-         width: 60px;
-         height: 60px; 
-         left: 0px;
-    
-         /* 隱藏原生的藍色箭頭 */
-         text-indent: 160%;
-         white-space:nowrap;
-         overflow:hidden;
-        } 
-        :deep(.product-swiper){
-        margin: auto;
-        padding: 0;
+    /* 隱藏原生的藍色箭頭 */
+    text-indent: 160%;
+    white-space:nowrap;
+    overflow:hidden;
+  } 
+  :deep(.product-swiper){
+  margin: auto;
+  padding: 0;
           
-          @media(min-width:768px){
-            margin: 0 -30px !important;
-            padding: 0 30px !important;
-          }
-        }  
+    @media(min-width:768px){
+      margin: 0 -30px !important;
+      padding: 0 30px !important;
+    }
+  }  
       
+  .swiper-button-next svg path,.swiper-button-prev svg path {
+  fill: #FFD700; /* 修改箭頭顏色為黃色 */}  
     
-    .swiper-button-next svg path,
-    .swiper-button-prev svg path {
-      fill: #FFD700; /* 修改箭頭顏色為黃色 */
-    }  
-    
-    
-    
-    </style> 
+</style> 
     
     

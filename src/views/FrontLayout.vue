@@ -140,7 +140,7 @@ export default{
 
           <!-- 右邊操作 -->
           <div class="flex gap-4 items-center">
-            <p class="font-black text-xl">{{ authStore.user?.name }}</p>
+            <p v-if="authStore.isLoggedIn" class="font-black text-xl">{{ authStore.user?.name }}</p>
             <div v-if="!authStore.isLoggedIn"class="flex gap-6">
               <router-link to="/login" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">登入</router-link>
               <router-link to="/signup" class="flex items-center gap-1 text-gray-600 transition-colors duration-200 hover:text-blue-600">註冊</router-link>

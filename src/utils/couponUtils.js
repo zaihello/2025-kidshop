@@ -313,10 +313,10 @@ export async function markUserCouponAsUsed({userId,couponId,type,axiosInstance})
         used_at:formatDateTime(),
       })
     }else{
-      console.log('⚠️ 找不到對應的優惠券，無法標記')
+      // console.log('⚠️ 找不到對應的優惠券，無法標記')
     }
   }catch(error){
-    console.log('❌ 無法標記優惠券為已使用:', error)
+    // console.log('❌ 無法標記優惠券為已使用:', error)
     throw error;
   }
 }
@@ -366,11 +366,11 @@ export function isTargetGroupUsable(targetGroup,user,ordersData){
     if(levelOption === 'All') {
       const condition = targetGroup.members.basicConditions
       if(condition === 'First') {
-        console.log('是否為首購',isFirstPurchase(user.id,ordersData))
+        // console.log('是否為首購',isFirstPurchase(user.id,ordersData))
         return isFirstPurchase(user.id,ordersData)
         
       }else if(condition === 'Birthday') {
-       console.log('是否生日當月:', isBirthdayMonth(user.birthday));
+      //  console.log('是否生日當月:', isBirthdayMonth(user.birthday));
        return isBirthdayMonth(user.birthday)
       }
       return true   // 沒有條件就視為通過
@@ -507,7 +507,7 @@ export function isPromotionUsable(promotion,cartItems = []){
     // ✅ 有啟用日期設定時才檢查日期範圍
     if (shouldCheckDate && !isInDateRange(validFrom, validTo, neverExpires)) return false
 
-    console.log('✅ isPromotionUsable 判斷結果: true', { validFrom, validTo, neverExpires })
+    // console.log('✅ isPromotionUsable 判斷結果: true', { validFrom, validTo, neverExpires })
 
     return true
   }

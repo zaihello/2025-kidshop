@@ -48,7 +48,7 @@ export const useCouponStore = defineStore('coupon',{
                 this.usableCoupons = result.filter(c => c.status === 'usable')           
                 this.invalidCoupons = result.filter( c => c.status === 'expired' || c.status ==='used' )
 
-                console.log('7/9userCoupons:', userCoupons)
+                // console.log('7/9userCoupons:', userCoupons)
                 // console.log('allCoupons:', allCoupons)
                 // console.log('orders:', orders)
                 // console.log('freeshippings:', freeshippings)

@@ -42,7 +42,7 @@ export const useWishlistStore = defineStore('wishlistStore', {
         }).filter(item => item);// 過濾掉 null 值（確保只保留有效商品）
         // 更新本地存储
         localStorage.setItem('wishlist', JSON.stringify(this.wishlist));
-        console.log('Successfully refreshed wishlist:', this.wishlist);
+        // console.log('Successfully refreshed wishlist:', this.wishlist);
       } catch (error) {
         console.error('Failed to refresh wishlist:', error);
       } finally {
@@ -70,7 +70,7 @@ export const useWishlistStore = defineStore('wishlistStore', {
       return;
     }
   
-    console.log('Wishlist before operation:', this.wishlist); // 操作前的 wishlist
+    // console.log('Wishlist before operation:', this.wishlist); // 操作前的 wishlist
   
     if (this.isInWishlist(product.id)) {
       // 商品已在願望清單中，執行移除
@@ -89,7 +89,7 @@ export const useWishlistStore = defineStore('wishlistStore', {
     }
   
     localStorage.setItem('wishlist', JSON.stringify(this.wishlist));
-    console.log('Wishlist after operation:', this.wishlist); // 操作後的 wishlist
+    // console.log('Wishlist after operation:', this.wishlist); // 操作後的 wishlist
   },
     //2.添加願望商品 
     async addToWishlist(product, userId, token) {
@@ -121,7 +121,7 @@ export const useWishlistStore = defineStore('wishlistStore', {
         this.wishlist = updatedWishlist;
         localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
     
-        console.log('成功添加商品到追踪清单:', product);
+        // console.log('成功添加商品到追踪清单:', product);
       } catch (error) {
         console.error('添加商品到愿望清单时出错:', error);
       }

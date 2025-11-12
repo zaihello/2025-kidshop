@@ -87,7 +87,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
             }
             const response = await axios.get("https://204ed3432b06d7af.mokky.dev/product");
             this.products = response.data.filter(product => product.is_enabled); // 只保留啟用的商品
-            console.log('getProducts',this.products)
+            // console.log('getProducts',this.products)
             localStorage.setItem("products", JSON.stringify(this.products)); // 儲存商品資料到 localStorage
             } catch (error) {
             console.error("Error fetching products:", error);
@@ -110,7 +110,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 
                 // 在 localStorage 存商品資料，這樣即使頁面刷新，商品也能立即顯示：
                 localStorage.setItem("adminProducts", JSON.stringify(this.adminProducts)); // 存入快取
-                console.log('adminProducts',this.adminProducts);
+                // console.log('adminProducts',this.adminProducts);
             } catch (error) {
                 console.error("Error fetching products:", error);
             }
@@ -133,7 +133,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                 }
         
                 // **確保 `is_expired` 值正確**
-                console.log("更新的 is_expired:", isExpired, "類型:", typeof isExpired);
+                // console.log("更新的 is_expired:", isExpired, "類型:", typeof isExpired);
         
                 // **發送 API 更新 `is_enabled` 和 `is_expired`**
                 await axios.patch(`https://204ed3432b06d7af.mokky.dev/product/${productId}`, {
@@ -170,7 +170,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                     updatedAt: this.formatTaiwanTime() // 每次更新都記錄當下時間(一定要寫在updateProduct裡)
                 };
 
-                console.log("即將送出的 updatedProduct:", JSON.stringify(updatedProduct, null, 2));
+                // console.log("即將送出的 updatedProduct:", JSON.stringify(updatedProduct, null, 2));
 
                 //// 1. **更新後端 API**dev/products
                 const response = await axios.patch(`https://204ed3432b06d7af.mokky.dev/product/${product.id}`, updatedProduct);
@@ -182,7 +182,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                     this.adminProducts[index] = { ...response.data };// 更新後台商品資料
                 }
 
-                console.log("即將更新的 product.id:", product.id);
+                // console.log("即將更新的 product.id:", product.id);
 
                 // 更新 localStorage
                 localStorage.setItem("products", JSON.stringify(this.products));
@@ -253,7 +253,7 @@ export const useAdminProductStore = defineStore('adminProductStore',{
                     const createdProduct = await this.createProduct(this.tempProduct); // **等待 API 回應**
                     if (createdProduct && createdProduct.id) {
                         this.tempProduct.id = createdProduct.id; // **確保 ID 正確**
-                        console.log("主產品創建成功，ID:", this.tempProduct.id);
+                        // console.log("主產品創建成功，ID:", this.tempProduct.id);
                     } else {
                         console.error("主產品創建失敗，未取得有效 ID");
                         return;

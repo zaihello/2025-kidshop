@@ -22,12 +22,12 @@ export async function login(credentials) {
     //  data:user這裡的data是輸出的格式https://mokky.gitbook.io/welcome/dop.-nastroiki/autentifikaciya/primer-koda 看成功回覆標題
       const response = await axios.post(`${API_URL}/auth`, credentials);
       const { token, data:user } = response.data;
-      console.log('會員登入回應:',response.data)  
+      // console.log('會員登入回應:',response.data)  
       
       // **改用 `role` 判斷會員**
       if(user.role === 'member'){
         authStore.setAuthData(token, user);//登入時設置 token 與 user 資訊
-        console.log(`會員登入成功，ID: ${user.id}`);
+        // console.log(`會員登入成功，ID: ${user.id}`);
         
         // 後台會員的last_login:取得當前台灣時間並格式化為 YYYY/MM/DD HH:mm
         const now = new Date().toLocaleString('zh-TW', { 
@@ -44,14 +44,14 @@ export async function login(credentials) {
        
         await axios.patch(`${API_URL}/users/${user.id}`, { last_login: now });
          // **更新 authStore，讓畫面立即顯示最新時間**
-        console.log('會員 last_login 已更新:', now);
+        // console.log('會員 last_login 已更新:', now);
 
          // 登入後同步獲取追蹤清單
         await wishlistStore.getWishlist();
         // 登入後獲取購物車
         await cartStore.getCartData();
 
-        console.log('會員登入成功，購物車與追蹤清單已同步');
+        // console.log('會員登入成功，購物車與追蹤清單已同步');
         return response.data; // 返回數據供組件使用
       }else{
         throw new Error('非會員帳號，請使用管理員登入');
@@ -69,11 +69,11 @@ export async function adminLogin(credentials){
   try{
     const response = await axios.post(`${API_URL}/auth`, credentials);
     const { token, data: user } = response.data;
-    console.log('管理員登入回應:', response.data);
+    // console.log('管理員登入回應:', response.data);
     // **改用 `role` 判斷管理員**
     if (user.role === 'admin') {
       adminAuthStore.setAuthData(token, user);////登入時設置 token 與 user 資訊
-      console.log(`管理員登入成功，ID: ${user.id}`);
+      // console.log(`管理員登入成功，ID: ${user.id}`);
       return response.data;
     } else {
       throw new Error('非管理員帳號，請使用前台登入');
@@ -93,7 +93,7 @@ export async function logout() {
   authStore.clearAuth();
   adminAuthStore.clearAuth()
       
-  console.log('登出成功，所有狀態已清空');
+  // console.log('登出成功，所有狀態已清空');
 
 }
 

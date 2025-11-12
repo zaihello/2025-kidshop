@@ -286,7 +286,7 @@ export const usePaymentStore =defineStore("payment",{
         },
         //支付$按鈕
         async submitOrder(router) {
-          console.log('🧾 selectedCouponId:', this.selectedCouponId)
+          // console.log('🧾 selectedCouponId:', this.selectedCouponId)
 
           const authStore = useAuthStore()
           const token = authStore.token;
@@ -322,7 +322,7 @@ export const usePaymentStore =defineStore("payment",{
                 type:'discount',
                 axiosInstance
               })
-              console.log('🧾 627 selectedDiscountCouponId:', this.selectedDiscountCouponId);
+              // console.log('🧾 627 selectedDiscountCouponId:', this.selectedDiscountCouponId);
 
             }
 
@@ -364,7 +364,7 @@ export const usePaymentStore =defineStore("payment",{
           const userInfo = this.orderInfo.user_info;
           if (this.sameAsUserInfo) {
            
-            console.log(this.sameAsUserInfo)
+            // console.log(this.sameAsUserInfo)
             // 複製基本資料
             shippingInfo.name = userInfo.name;
             shippingInfo.email = userInfo.email;
@@ -396,7 +396,7 @@ export const usePaymentStore =defineStore("payment",{
             shippingInfo.zipcode = '';
             shippingInfo.comment = '';
           }
-          console.log('✅ copyUserInfo 被呼叫了！')
+          // console.log('✅ copyUserInfo 被呼叫了！')
         },
       
         //選擇發票button

@@ -170,8 +170,8 @@ export function checkAmountThresholdMet(campaign,cartItems) {
     const totalPieces = cartItems.reduce((sum,item) => sum + item.quantity,0)
     const totalAmount = cartItems.reduce((sum,item) => sum + item.subTotal,0)
 
-    console.log('7/10 totalPieces',totalPieces)
-    console.log('7/10 totalAmount',totalAmount)
+    // console.log('7/10 totalPieces',totalPieces)
+    // console.log('7/10 totalAmount',totalAmount)
 
     if(conditionSubType === 'miniPieces') return totalPieces >= Number(miniPieces)
     if(conditionSubType === 'miniAmount') return totalAmount >= Number(miniAmount)

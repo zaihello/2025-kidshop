@@ -32,7 +32,7 @@ export const useAuthStore = defineStore('authStore', {
       localStorage.setItem('userId', user.id); // 儲存 userId
       localStorage.setItem('userData',JSON.stringify(user))
 
-      console.log('設定user:',user)
+      // console.log('設定user:',user)
     },
     clearAuth() {
       const cartStore = useCartStore()

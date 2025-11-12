@@ -29,7 +29,7 @@ export default{
         });
   
         alert('登入成功！');
-        console.log('登入後的數據:', data);
+        // console.log('登入後的數據:', data);
   
         // 登入後跳轉頁面
         this.$router.push('/shop');
@@ -81,7 +81,7 @@ export default{
                 v-model="form.password"
                :type="showPassword ? 'text' : 'password'"
                 id="password"
-                placeholder="請輸入您的 password"
+                placeholder="輸入123456可體驗購物流程"
                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
                 
               />

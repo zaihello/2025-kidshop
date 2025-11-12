@@ -246,7 +246,7 @@
           this.product = response.data;
 
           this.setActiveImage();  // 預設設定第一張圖片為主要圖片
-          console.log('詳細頁面商品資料',this.product)
+          // console.log('詳細頁面商品資料',this.product)
         
         } catch (error) {
           this.errorMessage = '無法獲取商品資料，請稍後再試。';

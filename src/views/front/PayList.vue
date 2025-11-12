@@ -116,7 +116,7 @@ export default {
     async submitOrder(){
       const success = await this.paymentStore.submitOrder(this.$router);
       if (success) {
-        console.log("✅ 訂單建立成功");
+        // console.log("✅ 訂單建立成功");
       }
 
     },

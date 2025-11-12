@@ -41,7 +41,7 @@ export default {
       try {
         const response = await register(this.form); // 來自import { register }，，確保正確接收回傳值
         
-        console.log("註冊 API 回傳資料:", response); // 檢查是否有 type
+        // console.log("註冊 API 回傳資料:", response); // 檢查是否有 type
         this.$router.push('/login'); // 跳轉到登入頁面
       } catch (error) {
         alert(error.message);

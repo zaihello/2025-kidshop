@@ -134,9 +134,9 @@ export default{
        
         //記錄哪個商品被展開切換(編輯/新增)
         toggleExpand(productId) {
-            console.log("Before toggle:", this.expandedProduct);
+            // console.log("Before toggle:", this.expandedProduct);
             this.expandedProduct = this.expandedProduct === productId ? null : productId;
-            console.log("After toggle:", this.expandedProduct);
+            // console.log("After toggle:", this.expandedProduct);
         },
         //編輯、新增、刪除確認按鈕(使用async await 是要確保資料更新完成後才關閉 Modal)
         async handleConfirm() {

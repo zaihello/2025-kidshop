@@ -25,7 +25,7 @@ const editCoupon = (coupon) => {
   // currentCoupon.value = JSON.parse(JSON.stringify(coupon))
   isEditing.value = true
   showModal.value = true;
-  console.log('523',coupon)
+  // console.log('523',coupon)
 }
 // 刪除優惠券
 const deleteCoupon = async(id) => {
@@ -36,7 +36,7 @@ const deleteCoupon = async(id) => {
 }
 // 處理新增或編輯提交
 const handleCouponSubmit = async({ mode, payload}) => {
-  console.log('父元件收到的優惠券資料:', payload); 
+  // console.log('父元件收到的優惠券資料:', payload); 
   if(mode === 'edit'){
     //編輯
     await axios.patch(`https://204ed3432b06d7af.mokky.dev/coupons/${payload.id}`,payload)

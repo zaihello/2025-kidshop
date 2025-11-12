@@ -67,10 +67,10 @@ export default {
    
   },
   async mounted() {
-    console.log('載入前', this.cartStore.cartItems);
+    // console.log('載入前', this.cartStore.cartItems);
     this.loading = false//載入購物車資料後將載入設定為 false  (之後補上)
     await this.cartStore.getCartData(); //取得目前使用者的購物車  /cartsdata格式
-    console.log('API 載入後', this.cartStore.cartItems);
+    // console.log('API 載入後', this.cartStore.cartItems);
     // this.cartStore.setupWatchers()
     this.cartStore.setupCartSyncWatcher()
   },

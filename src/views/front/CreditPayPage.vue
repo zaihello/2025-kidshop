@@ -64,7 +64,7 @@ export default {
   },
   created() {
     this.orderId = this.$route.params.id; // 因為路由是 /credit/:id
-    console.log('Order ID:', this.orderId);
+    // console.log('Order ID:', this.orderId);
     this.generateCaptcha();
     this.getOrder()
   },

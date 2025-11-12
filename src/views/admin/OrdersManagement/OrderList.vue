@@ -120,7 +120,7 @@ export default{
                   ...order.payment_info
               }
             })
-            console.log('付款狀態已更新')
+            // console.log('付款狀態已更新')
           }catch(err){
             console.error('更新失敗', err)
           }
